@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Traitors: Castle of Shadows</title>
   <link rel="icon" href="data:,">
+  <!-- Rock-solid MQTT WebSocket Client for true cross-laptop multiplayer -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
   <style>
     :root {
       --bg: #0d0705;
@@ -116,6 +118,7 @@
     .tab-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
     .tab-nav button { flex: 1; padding: 10px; }
     .tab-nav button.active { border-color: var(--gold); background: #3a1e14; color: var(--gold-bright); }
+    .status-msg { font-size: 0.9rem; font-weight: bold; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -136,7 +139,7 @@
 <main>
   <div id="gamePanel" class="panel">
     <h2>THE GRAND GATHERING</h2>
-    <p>Play live with friends or auto-fill with AI bots. Unmask the Traitor before midnight.</p>
+    <p>Live multiplayer across any device or Wi-Fi. Host a chamber or enter a code to join.</p>
     
     <div style="margin-bottom: 16px;">
       <label style="display:block;margin-bottom:6px;font-size:0.85rem;color:var(--gold);">YOUR PLAYER NAME</label>
@@ -150,8 +153,8 @@
 
     <!-- Host Section -->
     <div id="hostSection">
-      <p style="font-size:0.85rem;">Room Code:</p>
-      <div id="roomCodeDisplay" class="room-code-tag">TR72</div>
+      <p style="font-size:0.85rem;">Share this Room Code with your friends:</p>
+      <div id="roomCodeDisplay" class="room-code-tag">GENERATING...</div>
       
       <div style="margin: 6px 0; font-size: 0.85rem; color: #f59e0b;">
         <span id="playerCount">1</span> Player(s) in Room
@@ -172,38 +175,30 @@
     <!-- Join Section -->
     <div id="joinSection" style="display: none;">
       <p style="font-size:0.85rem;">Enter the Room Code from the host:</p>
-      <input type="text" id="joinCodeInput" placeholder="e.g. TR72" style="width:140px;text-align:center;font-size:1.3rem;letter-spacing:3px;text-transform:uppercase;">
+      <input type="text" id="joinCodeInput" placeholder="e.g. TR46" style="width:140px;text-align:center;font-size:1.3rem;letter-spacing:3px;text-transform:uppercase;">
       <div style="margin-top: 15px;">
         <button class="primary" onclick="joinRoomNow()" style="padding:10px 24px;">Connect to Host 🚪</button>
       </div>
-      <p id="joinStatus" style="margin-top: 15px; font-size:0.85rem; color: var(--gold);"></p>
+      <p id="joinStatus" class="status-msg" style="color: var(--gold);"></p>
     </div>
   </div>
 </main>
 
 <script>
+  /* --- AUDIO SYNTHESIZER --- */
   var audioCtx = null;
   var isPlaying = false;
   var bgmInterval = null;
 
   function toggleAudio() {
     try {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       isPlaying = !isPlaying;
       document.getElementById('audioBtn').innerText = isPlaying ? "⏸ Pause" : "▶ Play Music";
-      if (isPlaying) {
-        startSoundLoop();
-      } else {
-        stopSoundLoop();
-      }
-    } catch(e) {
-      console.log("Audio issue: ", e);
-    }
+      if (isPlaying) startSoundLoop();
+      else stopSoundLoop();
+    } catch(e) { console.log(e); }
   }
 
   function startSoundLoop() {
@@ -258,6 +253,7 @@
     }
   }
 
+  /* --- DYNAMIC MYSTERY GENERATOR --- */
   var MYSTERY_WORDS = ["DAGGER", "POISON", "BETRAY", "VENOM", "SECRET", "SHADOW", "CASTLE", "MURDER"];
   var FORENSIC_CLUES = [
     "Footprint evidence: A boot mark matching size 9 was found near the cellar.",
@@ -306,13 +302,15 @@
     }
   }
 
-  var syncBus = (window.BroadcastChannel) ? new BroadcastChannel('traitors_channel') : null;
+  /* --- TRUE INTERNET MULTIPLAYER VIA MQTT WEBSOCKETS --- */
+  var mqttClient = null;
   var roomCode = "TR" + Math.floor(10 + Math.random() * 90);
-  document.getElementById('roomCodeDisplay').innerText = roomCode;
+  var TOPIC_PREFIX = "traitors_game_v2/";
+  var currentTopic = "";
 
   var BOT_NAMES_POOL = ["Vikram (Bot)", "Inspector Roy (Bot)", "Simran (Bot)", "Kabir (Bot)", "Aarya (Bot)"];
   var gameState = {
-    myId: 'player_' + Math.random().toString(36).substr(2, 6),
+    myId: 'usr_' + Math.random().toString(36).substr(2, 7),
     myName: "Nick",
     isHost: true,
     players: [],
@@ -322,294 +320,98 @@
     logs: []
   };
 
-  if (syncBus) {
-    syncBus.onmessage = function(ev) {
-      var msg = ev.data;
-      if (!msg) return;
-      if (gameState.isHost) {
-        if (msg.type === 'REQ_JOIN' && msg.code === roomCode) {
+  function initMqtt(channelCode, onConnected) {
+    currentTopic = TOPIC_PREFIX + channelCode;
+    var clientId = "traitor_" + Math.random().toString(36).substr(2, 8);
+    // Uses HiveMQ free public Secure WebSocket broker
+    mqttClient = new Paho.MQTT.Client("broker.hivemq.com", Number(8884), "/mqtt", clientId);
+
+    mqttClient.onConnectionLost = function(resp) {
+      console.log("MQTT Lost: ", resp);
+    };
+
+    mqttClient.onMessageArrived = function(message) {
+      try {
+        var msg = JSON.parse(message.payloadString);
+        handleIncomingMessage(msg);
+      } catch(e) {}
+    };
+
+    mqttClient.connect({
+      useSSL: true,
+      timeout: 10,
+      onSuccess: function() {
+        mqttClient.subscribe(currentTopic);
+        if (onConnected) onConnected();
+      },
+      onFailure: function(err) {
+        console.log("MQTT Connect failed: ", err);
+      }
+    });
+  }
+
+  function sendNetworkMsg(obj) {
+    if (mqttClient && mqttClient.isConnected()) {
+      var message = new Paho.MQTT.Message(JSON.stringify(obj));
+      message.destinationName = currentTopic;
+      mqttClient.send(message);
+    }
+  }
+
+  function handleIncomingMessage(msg) {
+    if (gameState.isHost) {
+      if (msg.type === 'JOIN_REQUEST') {
+        var exists = gameState.players.some(p => p.id === msg.id);
+        if (!exists) {
           gameState.players.push({ id: msg.id, name: msg.name, isBot: false, alive: true, role: 'Faithful' });
           updateRosterUI();
-          syncBus.postMessage({ type: 'SYNC_LOBBY', code: roomCode, players: gameState.players });
-        }
-      } else {
-        if (msg.type === 'SYNC_LOBBY' && msg.code === roomCode) {
-          gameState.players = msg.players;
-          document.getElementById('joinStatus').innerText = "Connected! In Chamber: " + msg.players.length + " players.";
-        } else if (msg.type === 'START_GAME' && msg.code === roomCode) {
-          gameState.players = msg.players;
-          showRoleReveal();
+          sendNetworkMsg({ type: 'LOBBY_UPDATE', players: gameState.players });
         }
       }
-    };
-  }
-
-  window.switchMode = function(mode) {
-    if (mode === 'HOST') {
-      gameState.isHost = true;
-      document.getElementById('tabHostBtn').className = "gold active";
-      document.getElementById('tabJoinBtn').className = "";
-      document.getElementById('hostSection').style.display = "block";
-      document.getElementById('joinSection').style.display = "none";
-    } else {
-      gameState.isHost = false;
-      document.getElementById('tabJoinBtn').className = "gold active";
-      document.getElementById('tabHostBtn').className = "";
-      document.getElementById('hostSection').style.display = "none";
-      document.getElementById('joinSection').style.display = "block";
-    }
-  };
-
-  function updateRosterUI() {
-    var nameField = document.getElementById('nameInput');
-    gameState.myName = (nameField && nameField.value.trim()) ? nameField.value.trim() : "Host";
-
-    if (gameState.players.length === 0) {
-      gameState.players.push({ id: gameState.myId, name: gameState.myName + " (Host)", isBot: false, alive: true, role: 'Faithful' });
-    } else {
-      gameState.players[0].name = gameState.myName + " (Host)";
-    }
-
-    var list = document.getElementById('rosterList');
-    if (list) {
-      list.innerHTML = gameState.players.map(function(p) {
-        return `
-          <div class="player-row">
-            <span>${p.name}</span>
-            <span class="badge ${p.isBot ? 'badge-bot' : 'badge-faithful'}">${p.isBot ? 'Bot' : 'Player'}</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    var count = document.getElementById('playerCount');
-    if (count) count.innerText = gameState.players.length;
-  }
-
-  window.addOneBot = function() {
-    var botNum = gameState.players.filter(p => p.isBot).length;
-    var botName = BOT_NAMES_POOL[botNum % BOT_NAMES_POOL.length];
-    gameState.players.push({
-      id: 'bot_' + Math.random().toString(36).substr(2, 5),
-      name: botName,
-      isBot: true,
-      alive: true,
-      role: 'Faithful'
-    });
-    updateRosterUI();
-  };
-
-  window.fillToFiveBots = function() {
-    while (gameState.players.length < 5) {
-      window.addOneBot();
-    }
-  };
-
-  window.joinRoomNow = function() {
-    var code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
-    var name = document.getElementById('nameInput').value.trim() || "Guest";
-    if (!code) { alert("Please enter the code shown on the Host screen."); return; }
-    roomCode = code;
-    document.getElementById('joinStatus').innerText = "Connecting to Chamber " + code + "...";
-
-    if (syncBus) {
-      syncBus.postMessage({ type: 'REQ_JOIN', code: code, id: gameState.myId, name: name });
-    } else {
-      setTimeout(function() {
-        document.getElementById('joinStatus').innerText = "Joined room " + code + "! Waiting for host to click Start...";
-      }, 500);
-    }
-  };
-
-  window.hostStartGame = function() {
-    updateRosterUI();
-    if (gameState.players.length < 2) {
-      window.fillToFiveBots();
-    }
-
-    var traitorIdx = Math.floor(Math.random() * gameState.players.length);
-    gameState.players.forEach(function(p, idx) {
-      p.role = (idx === traitorIdx) ? 'Traitor' : 'Faithful';
-    });
-
-    if (syncBus) {
-      syncBus.postMessage({ type: 'START_GAME', code: roomCode, players: gameState.players });
-    }
-    showRoleReveal();
-  };
-
-  function showRoleReveal() {
-    var me = gameState.players.find(p => p.id === gameState.myId) || gameState.players[0];
-    var isT = (me.role === 'Traitor');
-
-    document.getElementById('gamePanel').innerHTML = `
-      <h2>YOUR CLASSIFIED DOSSIER</h2>
-      <div style="margin:20px 0;">
-        <span class="badge ${isT ? 'badge-traitor' : 'badge-faithful'}" style="font-size:1.3rem;padding:8px 22px;">
-          ${isT ? 'TRAITOR' : 'FAITHFUL'}
-        </span>
-      </div>
-      <p>${isT ? '🔥 You are the Traitor! Kill secretly during the night and deflect blame.' : '🛡️ You are a Faithful! Crack dynamic puzzles, analyze forensic evidence, and banish the killer.'}</p>
-      <button class="gold" onclick="showNight()" style="padding:10px 24px;">Enter Night 1 🌙</button>
-    `;
-  }
-
-  window.showNight = function() {
-    var me = gameState.players.find(p => p.id === gameState.myId) || gameState.players[0];
-    var isT = (me.role === 'Traitor') && me.alive;
-    var targets = gameState.players.filter(p => p.alive && p.id !== me.id);
-
-    if (isT) {
-      var rows = targets.map(function(p) {
-        return `
-          <div class="player-row">
-            <span>${p.name}</span>
-            <button class="primary" onclick="executeMurder('${p.id}')">Assassinate 🗡️</button>
-          </div>
-        `;
-      }).join('');
-
-      document.getElementById('gamePanel').innerHTML = `
-        <h2 style="color:red;">THE NIGHT CONCLAVE</h2>
-        <p style="color:#f87171;">Select a Faithful to assassinate:</p>
-        <div class="roster">${rows}</div>
-      `;
-    } else {
-      document.getElementById('gamePanel').innerHTML = `
-        <h2 style="color:red;">THE NIGHT CONCLAVE</h2>
-        <p>The Castle doors are locked. The Traitor is stalking in the dark...</p>
-        <p>Pray that you survive the night.</p>
-        <button class="gold" onclick="botNightAction()" style="margin-top:15px;padding:10px 24px;">Wait for Dawn Bells 🔔</button>
-      `;
-    }
-  };
-
-  window.executeMurder = function(targetId) {
-    var victim = gameState.players.find(p => p.id === targetId);
-    victim.alive = false;
-    gameState.logs.push("Morning arrives. " + victim.name + " was murdered in the dark!");
-    showInvestigation();
-  };
-
-  window.botNightAction = function() {
-    var traitor = gameState.players.find(p => p.role === 'Traitor' && p.alive);
-    if (traitor && traitor.isBot) {
-      var livingFaithful = gameState.players.filter(p => p.alive && p.role === 'Faithful');
-      if (livingFaithful.length > 0) {
-        var victim = livingFaithful[Math.floor(Math.random() * livingFaithful.length)];
-        victim.alive = false;
-        gameState.logs.push("Morning arrives. " + victim.name + " was found dead near the courtyard!");
+      else if (msg.type === 'ACTION_KILL') {
+        var victim = gameState.players.find(p => p.id === msg.targetId);
+        if (victim) {
+          victim.alive = false;
+          gameState.logs.push("Morning arrives. " + victim.name + " was murdered in the dark!");
+          launchInvestigation();
+        }
+      }
+      else if (msg.type === 'ACTION_VOTE') {
+        var voted = gameState.players.find(p => p.id === msg.targetId);
+        if (voted) {
+          voted.alive = false;
+          gameState.logs.push("The Round Table has spoken: " + voted.name + " is BANISHED!");
+          gameState.logs.push(voted.name + " revealed their true identity: " + voted.role.toUpperCase() + "!");
+          gameState.round += 1;
+          checkGameOverHost();
+        }
       }
     } else {
-      gameState.logs.push("The morning bell tolls. Everyone survived the night!");
-    }
-    showInvestigation();
-  };
-
-  function showInvestigation() {
-    gameState.activePuzzle = getDynamicPuzzle();
-    document.getElementById('gamePanel').innerHTML = `
-      <h2>🕵️ CRIME SCENE INVESTIGATION</h2>
-      <p>A fresh murder took place! Solve the forensic cipher to unlock evidence.</p>
-      <div class="clue-box">
-        <strong>MYSTERY PUZZLE:</strong><br>
-        ${gameState.activePuzzle.q}
-        <div style="margin-top:8px;font-size:0.8rem;color:#fdba74;">💡 Hint: ${gameState.activePuzzle.hint}</div>
-      </div>
-      <div style="margin: 15px 0;">
-        <input type="text" id="puzzleInput" placeholder="Enter answer..." style="width:200px;text-align:center;">
-        <button class="gold" onclick="verifyDeduction()" style="margin-left:8px;">Submit Deduction</button>
-      </div>
-      <button onclick="skipDeduction()" style="font-size:0.8rem;background:transparent;border:none;color:#a39284;cursor:pointer;text-decoration:underline;">Proceed to Round Table without Clue</button>
-    `;
-  }
-
-  window.verifyDeduction = function() {
-    var val = document.getElementById('puzzleInput').value.trim().toUpperCase();
-    if (val === gameState.activePuzzle.a.toUpperCase()) {
-      alert("BRILLIANT DEDUCTION! Forensic evidence unlocked!");
-      gameState.currentClue = FORENSIC_CLUES[Math.floor(Math.random() * FORENSIC_CLUES.length)];
-      gameState.logs.push("Forensic Clue Discovered: " + gameState.currentClue);
-    } else {
-      alert("Incorrect deduction! The answer was " + gameState.activePuzzle.a + ". Clue lost in the dark.");
-      gameState.currentClue = null;
-    }
-    checkGameOver(showDay);
-  };
-
-  window.skipDeduction = function() {
-    gameState.currentClue = null;
-    checkGameOver(showDay);
-  };
-
-  function showDay() {
-    var living = gameState.players.filter(p => p.alive);
-    var rows = living.map(function(p) {
-      return `
-        <div class="player-row">
-          <span><strong>${p.name}</strong></span>
-          <button class="primary" onclick="castVote('${p.id}')">Accuse & Banish</button>
-        </div>
-      `;
-    }).join('');
-
-    document.getElementById('gamePanel').innerHTML = `
-      <h2>THE ROUND TABLE BANISHMENT</h2>
-      <p>Round ${gameState.round} Debate. Discuss with your friends and cast your vote!</p>
-      ${gameState.currentClue ? `
-        <div class="clue-box">
-          <strong>🔍 FORENSIC EVIDENCE FOUND:</strong><br>
-          ${gameState.currentClue}
-        </div>
-      ` : ''}
-      <div class="log-box">
-        ${gameState.logs.map(l => '<div>• ' + l + '</div>').join('')}
-      </div>
-      <div class="roster">${rows}</div>
-    `;
-  }
-
-  window.castVote = function(targetId) {
-    var voted = gameState.players.find(p => p.id === targetId);
-    voted.alive = false;
-    gameState.logs.push("The Round Table has spoken: " + voted.name + " is BANISHED!");
-    gameState.logs.push(voted.name + " stood in the light: \"I WAS A " + voted.role.toUpperCase() + "!\"");
-    gameState.round += 1;
-    checkGameOver(showNight);
-  };
-
-  function checkGameOver(nextPhaseCallback) {
-    var livingTraitors = gameState.players.filter(p => p.alive && p.role === 'Traitor').length;
-    var livingFaithful = gameState.players.filter(p => p.alive && p.role === 'Faithful').length;
-
-    if (livingTraitors === 0) {
-      showEndScreen(false);
-    } else if (livingTraitors >= livingFaithful) {
-      showEndScreen(true);
-    } else {
-      nextPhaseCallback();
-    }
-  }
-
-  function showEndScreen(traitorWon) {
-    var rows = gameState.players.map(function(p) {
-      return `
-        <div class="player-row">
-          <span>${p.name} ${!p.alive ? '<span style="color:#ef4444;">[DEAD]</span>' : ''}</span>
-          <span class="badge ${p.role === 'Traitor' ? 'badge-traitor' : 'badge-faithful'}">${p.role}</span>
-        </div>
-      `;
-    }).join('');
-
-    document.getElementById('gamePanel').innerHTML = `
-      <h2>${traitorWon ? '🩸 THE TRAITOR PREVAILS' : '🏆 THE FAITHFUL PREVAIL'}</h2>
-      <p>${traitorWon ? 'The Traitor has seized full control of the Castle!' : 'All Traitors have been unmasked and eliminated!'}</p>
-      <div class="roster">${rows}</div>
-      <button class="gold" onclick="location.reload()" style="margin-top:15px;padding:10px 24px;">Play Again</button>
-    `;
-  }
-
-  updateRosterUI();
-</script>
-</body>
-</html>
+      if (msg.type === 'LOBBY_UPDATE') {
+        gameState.players = msg.players;
+        document.getElementById('joinStatus').style.color = "#10b981";
+        document.getElementById('joinStatus').innerText = "✓ Connected to Chamber! Total Players: " + msg.players.length;
+      }
+      else if (msg.type === 'GAME_START') {
+        gameState.players = msg.players;
+        gameState.round = msg.round;
+        showRoleReveal();
+      }
+      else if (msg.type === 'PHASE_NIGHT') {
+        gameState.players = msg.players;
+        showNight();
+      }
+      else if (msg.type === 'PHASE_INVESTIGATION') {
+        gameState.activePuzzle = msg.puzzle;
+        gameState.logs = msg.logs;
+        showInvestigation();
+      }
+      else if (msg.type === 'PHASE_DAY') {
+        gameState.players = msg.players;
+        gameState.currentClue = msg.clue;
+        gameState.logs = msg.logs;
+        showDay();
+      }
+      else if (msg.type === 'GAME_OVER') {
+        gameState.players = msg.players;
+        showEndScreen(msg.traitorWon);
