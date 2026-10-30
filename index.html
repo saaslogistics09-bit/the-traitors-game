@@ -1,33 +1,374 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Raja Mantri Chor Sipahi Daku - Royal Darbar</title>
-  <link rel="icon" href="data:,">
-  <!-- Paho MQTT WebSocket Client for seamless cross-device multiplayer -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
-  <style>
-    :root {
-      --bg: #120907;
-      --card-bg: rgba(26, 14, 11, 0.96);
-      --gold: #d4af37;
-      --gold-bright: #ffd700;
-      --crimson: #991b1b;
-      --border: #57311d;
-      --text: #fef3c7;
-      --text-muted: #d1b89d;
+  <title>Raja Mantri Chor Sipahi Daku - 5 Player</title>
+</head>
+<body style="background:#0f172a; color:#ffffff; font-family:Arial, sans-serif; text-align:center; margin:15px;">
+
+  <h2 style="margin:8px 0; color:#fbbf24;">👑 Raja Mantri Chor Sipahi Daku</h2>
+  <div style="font-size:14px; color:#94a3b8; margin-bottom:14px;">5-Player Desi Darbar Game (1000, 800, 500, 300, 0 pts)</div>
+
+  <!-- Main Game Container -->
+  <div id="gameBox" style="display:inline-block; background:#1e293b; padding:20px; border-radius:12px; box-shadow:0 4px 25px rgba(0,0,0,0.7); max-width:550px; width:95%;">
+    
+    <!-- LOBBY SCREEN -->
+    <div id="lobbyScreen">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px; color:#cbd5e1; display:block; margin-bottom:4px;">Aapka Naam:</label>
+        <input type="text" id="playerNameInput" value="Nick" style="background:#0f172a; border:2px solid #334155; color:#fff; padding:6px 10px; border-radius:6px; font-size:15px; font-weight:bold; text-align:center; width:200px;">
+      </div>
+
+      <div style="margin:15px 0;">
+        <span style="font-size:13px; color:#94a3b8;">Room Code:</span>
+        <div id="roomCodeText" style="display:inline-block; background:#0f172a; border:2px dashed #fbbf24; color:#fef08a; padding:6px 14px; border-radius:6px; font-size:18px; font-weight:bold; letter-spacing:2px; margin-left:8px;">RJ55</div>
+      </div>
+
+      <div style="margin:12px 0;">
+        <div style="font-size:13px; color:#38bdf8; font-weight:bold; margin-bottom:6px;">Darbar Ke Khiladi (<span id="pCount">1</span>/5):</div>
+        <div id="playerList" style="display:flex; flex-direction:column; gap:6px; max-width:320px; margin:0 auto;">
+          <div style="background:#0f172a; padding:8px 12px; border-radius:6px; border:1px solid #334155; font-size:14px;">Nick (Host)</div>
+        </div>
+      </div>
+
+      <div style="margin:15px 0;">
+        <button onclick="addOneBot()" style="background:#2563eb; color:#fff; border:none; padding:8px 14px; margin:0 4px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">+ Add 1 Bot</button>
+        <button onclick="autoFillBots()" style="background:#0891b2; color:#fff; border:none; padding:8px 14px; margin:0 4px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">Auto-Fill 5 Players</button>
+      </div>
+
+      <button onclick="startDarbar()" style="background:#059669; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-size:15px; font-weight:bold; cursor:pointer; width:100%; max-width:280px; margin-top:10px;">
+        📜 Parchiyan Banten (Start)
+      </button>
+
+      <!-- Friend Join Block -->
+      <div style="margin-top:20px; padding-top:15px; border-top:1px solid #334155;">
+        <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">Dusra dost join karne ke liye:</div>
+        <input type="text" id="joinCodeInput" placeholder="Room Code" style="background:#0f172a; border:2px solid #334155; color:#fff; padding:6px; border-radius:6px; font-size:14px; text-align:center; width:120px; text-transform:uppercase;">
+        <button onclick="joinChamber()" style="background:#d97706; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; margin-left:6px;">Join</button>
+      </div>
+    </div>
+
+    <!-- PARCHI REVEAL SCREEN -->
+    <div id="parchiScreen" style="display:none;">
+      <h3 style="color:#fbbf24; margin:4px 0;">Aapki Parchi (Chit)</h3>
+      <p style="font-size:13px; color:#94a3b8; margin-bottom:12px;">Apna shahi padd gopniya rakhein!</p>
+
+      <div id="parchiBox" style="background:#0f172a; border:3px solid #fbbf24; border-radius:10px; padding:20px; margin:15px auto; max-width:240px;">
+        <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">SHAHI PADD</div>
+        <div id="roleTitle" style="font-size:26px; font-weight:bold; color:#fbbf24;">RAJA</div>
+        <div id="rolePts" style="font-size:14px; color:#4ade80; margin-top:6px; font-weight:bold;">1000 Points</div>
+      </div>
+
+      <p id="roleInstruction" style="font-size:13px; color:#e2e8f0; margin:12px 0;"></p>
+
+      <button onclick="openCourt()" style="background:#059669; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer;">
+        Darbar Mein Chalein 🏛️
+      </button>
+    </div>
+
+    <!-- COURTROOM INTERROGATION SCREEN -->
+    <div id="courtScreen" style="display:none;">
+      <h3 style="color:#fbbf24; margin:4px 0;">🏛️ Shahi Darbar</h3>
+      
+      <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; padding:12px; text-align:left; font-size:13px; margin:14px 0; line-height:1.5;">
+        <div>👑 <strong>Raja (<span id="rajaName"></span>):</strong> "Mera Mantri Kaun?"</div>
+        <div style="color:#38bdf8;">🧠 <strong>Mantri (<span id="mantriName"></span>):</strong> "Huzoor, main hazir hoon!"</div>
+        <div style="color:#ef4444;">👑 <strong>Raja:</strong> "Sipahi (<span id="sipahiName"></span>), Darbar mein Daku ghus aaya hai. <strong>DAKU KO PAKDO!</strong>"</div>
+      </div>
+
+      <div id="guessPrompt" style="font-size:14px; font-weight:bold; color:#fde047; margin-bottom:10px;"></div>
+
+      <div id="suspectsList" style="display:flex; flex-direction:column; gap:8px; max-width:320px; margin:0 auto 15px auto;"></div>
+
+      <div id="botActionRow" style="display:none;">
+        <button onclick="botSipahiVerdict()" style="background:#2563eb; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">
+          Sipahi (Bot) Ka Faisla Dekhein ⚔️
+        </button>
+      </div>
+    </div>
+
+    <!-- ROUND VERDICT & SCOREBOARD SCREEN -->
+    <div id="verdictScreen" style="display:none;">
+      <h3 id="verdictHeading" style="margin:4px 0;"></h3>
+      <p id="verdictText" style="font-size:14px; font-weight:bold; margin:10px 0;"></p>
+
+      <div style="margin-top:15px; font-size:14px; font-weight:bold; color:#38bdf8; margin-bottom:6px;">🏆 Shahi Scoreboard</div>
+      <table id="scoreTable" style="width:100%; border-collapse:collapse; background:#0f172a; border-radius:6px; overflow:hidden; font-size:13px;">
+        <tr style="background:#334155; color:#fbbf24;">
+          <th style="padding:6px; border:1px solid #475569;">Khiladi</th>
+          <th style="padding:6px; border:1px solid #475569;">Padd (Role)</th>
+          <th style="padding:6px; border:1px solid #475569;">Iss Round</th>
+          <th style="padding:6px; border:1px solid #475569;">Total</th>
+        </tr>
+      </table>
+
+      <button onclick="nextRound()" style="background:#059669; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer; margin-top:16px;">
+        Agla Round Khelein 🔄
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    var BOT_NAMES = ["Birbal (Bot)", "Tansen (Bot)", "Maan Singh (Bot)", "Bhairav (Bot)", "Mangal (Bot)"];
+    var roomCode = "RJ" + Math.floor(10 + Math.random() * 90);
+    document.getElementById("roomCodeText").innerText = roomCode;
+
+    var state = {
+      players: [
+        { id: "p1", name: "Nick", isBot: false, role: "" }
+      ],
+      scores: { "p1": 0 },
+      round: 1
+    };
+
+    function updateLobbyUI() {
+      var nameInput = document.getElementById("playerNameInput");
+      state.players[0].name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "Host";
+
+      var list = document.getElementById("playerList");
+      list.innerHTML = "";
+      for (var i = 0; i < state.players.length; i++) {
+        var p = state.players[i];
+        var item = document.createElement("div");
+        item.style.cssText = "background:#0f172a; padding:8px 12px; border-radius:6px; border:1px solid #334155; font-size:14px; display:flex; justify-content:space-between;";
+        item.innerHTML = "<span>" + p.name + "</span><span style='color:" + (p.isBot ? "#94a3b8" : "#4ade80") + "; font-size:12px; font-weight:bold;'>" + (p.isBot ? "AI Bot" : "Player") + "</span>";
+        list.appendChild(item);
+      }
+      document.getElementById("pCount").innerText = state.players.length;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: radial-gradient(circle at center, #2e140d 0%, var(--bg) 100%);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+
+    function addOneBot() {
+      if (state.players.length >= 5) {
+        alert("Darbar mein poore 5 khiladi ho chuke hain!");
+        return;
+      }
+      var bIdx = 0;
+      for (var i = 0; i < state.players.length; i++) {
+        if (state.players[i].isBot) bIdx++;
+      }
+      var bName = BOT_NAMES[bIdx % BOT_NAMES.length];
+      var bId = "bot_" + Math.random().toString(36).substr(2, 5);
+      state.players.push({ id: bId, name: bName, isBot: true, role: "" });
+      state.scores[bId] = 0;
+      updateLobbyUI();
     }
-    header {
-      padding: 12px 20px;
-      background: rgba(15, 7, 5, 0.95);
-      border-bottom: 2
+
+    function autoFillBots() {
+      while (state.players.length < 5) {
+        addOneBot();
+      }
+    }
+
+    function joinChamber() {
+      var code = document.getElementById("joinCodeInput").value.trim().toUpperCase();
+      var name = document.getElementById("playerNameInput").value.trim() || "Guest";
+      if (!code) {
+        alert("Pehle Room Code dalein!");
+        return;
+      }
+      roomCode = code;
+      document.getElementById("roomCodeText").innerText = code;
+      alert("Chamber " + code + " mein pravesh hua!");
+      autoFillBots();
+    }
+
+    function startDarbar() {
+      var nameInput = document.getElementById("playerNameInput");
+      state.players[0].name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "Host";
+
+      if (state.players.length < 5) {
+        alert("Is game ke liye poore 5 khiladi chahiye! Auto-Fill button daba kar bots add karein.");
+        return;
+      }
+
+      // Shuffle 5 traditional chits
+      var chits = ["Raja", "Mantri", "Sipahi", "Daku", "Chor"];
+      for (var i = chits.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = chits[i];
+        chits[i] = chits[j];
+        chits[j] = temp;
+      }
+
+      for (var i = 0; i < 5; i++) {
+        state.players[i].role = chits[i];
+      }
+
+      document.getElementById("lobbyScreen").style.display = "none";
+      document.getElementById("courtScreen").style.display = "none";
+      document.getElementById("verdictScreen").style.display = "none";
+      document.getElementById("parchiScreen").style.display = "block";
+
+      var me = state.players[0];
+      document.getElementById("roleTitle").innerText = me.role.toUpperCase();
+
+      var pts = "0 Points";
+      var color = "#94a3b8";
+      var instruct = "";
+
+      if (me.role === "Raja") {
+        pts = "1,000 Points"; color = "#fbbf24";
+        instruct = "Aap Raja hain! Darbar bulayein aur Mantri se Daku ko pakadwayein.";
+      } else if (me.role === "Mantri") {
+        pts = "800 Points"; color = "#38bdf8";
+        instruct = "Aap Mantri hain! Raja ke 'Mera Mantri Kaun' poochte hi hazir hon.";
+      } else if (me.role === "Sipahi") {
+        pts = "500 Points"; color = "#4ade80";
+        instruct = "Aap Sipahi hain! Dono sandigdh darbaariyon mein se DAKU ko pehchanein.";
+      } else if (me.role === "Daku") {
+        pts = "300 Points (Sipahi chuka toh +500 Churaoge!)"; color = "#ef4444";
+        instruct = "Aap Daku hain! Shaant rahein aur aam darbaari hone ka natak karein.";
+      } else {
+        pts = "0 Points"; color = "#94a3b8";
+        instruct = "Aap Chor hain! Sipahi ka shaq Daku par daalne ki koshish karein.";
+      }
+
+      document.getElementById("roleTitle").style.color = color;
+      document.getElementById("rolePts").innerText = pts;
+      document.getElementById("roleInstruction").innerText = instruct;
+    }
+
+    function openCourt() {
+      document.getElementById("parchiScreen").style.display = "none";
+      document.getElementById("courtScreen").style.display = "block";
+
+      var raja = null, mantri = null, sipahi = null;
+      for (var i = 0; i < state.players.length; i++) {
+        if (state.players[i].role === "Raja") raja = state.players[i];
+        if (state.players[i].role === "Mantri") mantri = state.players[i];
+        if (state.players[i].role === "Sipahi") sipahi = state.players[i];
+      }
+
+      document.getElementById("rajaName").innerText = raja.name;
+      document.getElementById("mantriName").innerText = mantri.name;
+      document.getElementById("sipahiName").innerText = sipahi.name;
+
+      var me = state.players[0];
+      var isSipahi = (me.id === sipahi.id);
+
+      var prompt = document.getElementById("guessPrompt");
+      var sList = document.getElementById("suspectsList");
+      sList.innerHTML = "";
+
+      var suspects = [];
+      for (var i = 0; i < state.players.length; i++) {
+        if (state.players[i].role === "Chor" || state.players[i].role === "Daku") {
+          suspects.push(state.players[i]);
+        }
+      }
+
+      if (isSipahi) {
+        prompt.innerText = "Aap Sipahi hain! In dono mein se DAKU kaun hai? Chunao karein:";
+        document.getElementById("botActionRow").style.display = "none";
+
+        for (var i = 0; i < suspects.length; i++) {
+          (function(s) {
+            var btn = document.createElement("button");
+            btn.style.cssText = "background:#dc2626; color:#fff; border:none; padding:10px 14px; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer;";
+            btn.innerText = "⚔️ " + s.name + " Daku Hai!";
+            btn.onclick = function() { makeGuess(s.id); };
+            sList.appendChild(btn);
+          })(suspects[i]);
+        }
+      } else {
+        prompt.innerText = "Sipahi (" + sipahi.name + ") Daku ko pehchan raha hai...";
+        for (var i = 0; i < suspects.length; i++) {
+          var box = document.createElement("div");
+          box.style.cssText = "background:#0f172a; padding:8px 12px; border-radius:6px; border:1px solid #334155; font-size:14px;";
+          box.innerText = "Sandigdh: " + suspects[i].name;
+          sList.appendChild(box);
+        }
+        if (sipahi.isBot) {
+          document.getElementById("botActionRow").style.display = "block";
+        } else {
+          document.getElementById("botActionRow").style.display = "none";
+        }
+      }
+    }
+
+    function botSipahiVerdict() {
+      var suspects = [];
+      for (var i = 0; i < state.players.length; i++) {
+        if (state.players[i].role === "Chor" || state.players[i].role === "Daku") {
+          suspects.push(state.players[i]);
+        }
+      }
+      var pick = suspects[Math.floor(Math.random() * suspects.length)];
+      makeGuess(pick.id);
+    }
+
+    function makeGuess(suspectId) {
+      var daku = null, sipahi = null, chosen = null;
+      for (var i = 0; i < state.players.length; i++) {
+        if (state.players[i].role === "Daku") daku = state.players[i];
+        if (state.players[i].role === "Sipahi") sipahi = state.players[i];
+        if (state.players[i].id === suspectId) chosen = state.players[i];
+      }
+
+      var isCorrect = (chosen.id === daku.id);
+      var roundPts = {};
+
+      for (var i = 0; i < state.players.length; i++) {
+        var p = state.players[i];
+        if (p.role === "Raja") roundPts[p.id] = 1000;
+        else if (p.role === "Mantri") roundPts[p.id] = 800;
+        else if (p.role === "Chor") roundPts[p.id] = 0;
+      }
+
+      if (isCorrect) {
+        roundPts[sipahi.id] = 500;
+        roundPts[daku.id] = 0;
+      } else {
+        roundPts[sipahi.id] = 0;
+        roundPts[daku.id] = 300 + 500; // Daku steals Sipahi's 500
+      }
+
+      for (var i = 0; i < state.players.length; i++) {
+        var pid = state.players[i].id;
+        state.scores[pid] = (state.scores[pid] || 0) + roundPts[pid];
+      }
+
+      document.getElementById("courtScreen").style.display = "none";
+      document.getElementById("verdictScreen").style.display = "block";
+
+      var h = document.getElementById("verdictHeading");
+      var t = document.getElementById("verdictText");
+
+      if (isCorrect) {
+        h.innerText = "⚔️ DAKU RANGEY HAATHO PAKDA GAYA!";
+        h.style.color = "#4ade80";
+        t.innerText = "Sipahi ne bilkul sahi pehchana! " + chosen.name + " hi Daku tha. Sipahi ko poore 500 points mile!";
+        t.style.color = "#86efac";
+      } else {
+        h.innerText = "🗡️ DAKU BACH NIKLA!";
+        h.style.color = "#ef4444";
+        t.innerText = "Galat faisla! Sipahi ne " + chosen.name + " (Chor) ko pakad liya. Asli Daku (" + daku.name + ") Sipahi ke 500 points chura kar bhaag gaya!";
+        t.style.color = "#fca5a5";
+      }
+
+      var tbl = document.getElementById("scoreTable");
+      while (tbl.rows.length > 1) {
+        tbl.deleteRow(1);
+      }
+
+      for (var i = 0; i < state.players.length; i++) {
+        var p = state.players[i];
+        var row = tbl.insertRow(-1);
+        row.style.borderBottom = "1px solid #334155";
+        row.innerHTML = "<td style='padding:6px; border:1px solid #334155; font-weight:bold;'>" + p.name + "</td>" +
+                        "<td style='padding:6px; border:1px solid #334155; color:#fbbf24;'>" + p.role + "</td>" +
+                        "<td style='padding:6px; border:1px solid #334155; color:#4ade80;'>+" + roundPts[p.id] + "</td>" +
+                        "<td style='padding:6px; border:1px solid #334155; font-weight:bold; color:#fde047;'>" + state.scores[p.id] + "</td>";
+      }
+    }
+
+    function nextRound() {
+      state.round++;
+      startDarbar();
+    }
+
+    updateLobbyUI();
+  </script>
+</body>
+</html>
