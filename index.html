@@ -2,49 +2,62 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Raja Mantri Chor Sipahi Daku - 5 Player</title>
+  <title>Raja Mantri Chor Sipahi Daku - Multiplayer</title>
 </head>
 <body style="background:#0f172a; color:#ffffff; font-family:Arial, sans-serif; text-align:center; margin:15px;">
 
   <h2 style="margin:8px 0; color:#fbbf24;">👑 Raja Mantri Chor Sipahi Daku</h2>
-  <div style="font-size:14px; color:#94a3b8; margin-bottom:14px;">5-Player Desi Darbar Game (1000, 800, 500, 300, 0 pts)</div>
+  <div style="font-size:14px; color:#94a3b8; margin-bottom:14px;">Real-Time 5-Player Desi Darbar Game</div>
 
-  <!-- Main Game Container -->
   <div id="gameBox" style="display:inline-block; background:#1e293b; padding:20px; border-radius:12px; box-shadow:0 4px 25px rgba(0,0,0,0.7); max-width:550px; width:95%;">
     
     <!-- LOBBY SCREEN -->
     <div id="lobbyScreen">
       <div style="margin-bottom:12px;">
         <label style="font-size:13px; color:#cbd5e1; display:block; margin-bottom:4px;">Aapka Naam:</label>
-        <input type="text" id="playerNameInput" value="Nick" style="background:#0f172a; border:2px solid #334155; color:#fff; padding:6px 10px; border-radius:6px; font-size:15px; font-weight:bold; text-align:center; width:200px;">
+        <input type="text" id="playerNameInput" value="Player" style="background:#0f172a; border:2px solid #334155; color:#fff; padding:6px 10px; border-radius:6px; font-size:15px; font-weight:bold; text-align:center; width:200px;">
       </div>
 
-      <div style="margin:15px 0;">
-        <span style="font-size:13px; color:#94a3b8;">Room Code:</span>
-        <div id="roomCodeText" style="display:inline-block; background:#0f172a; border:2px dashed #fbbf24; color:#fef08a; padding:6px 14px; border-radius:6px; font-size:18px; font-weight:bold; letter-spacing:2px; margin-left:8px;">RJ55</div>
+      <div style="display:flex; justify-content:center; gap:10px; margin-bottom:15px;">
+        <button id="btnHostTab" onclick="setMode('HOST')" style="background:#059669; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer;">👑 Main Host Hoon</button>
+        <button id="btnJoinTab" onclick="setMode('JOIN')" style="background:#334155; color:#94a3b8; border:none; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer;">🗝️ Main Join Karunga</button>
       </div>
 
-      <div style="margin:12px 0;">
-        <div style="font-size:13px; color:#38bdf8; font-weight:bold; margin-bottom:6px;">Darbar Ke Khiladi (<span id="pCount">1</span>/5):</div>
-        <div id="playerList" style="display:flex; flex-direction:column; gap:6px; max-width:320px; margin:0 auto;">
-          <div style="background:#0f172a; padding:8px 12px; border-radius:6px; border:1px solid #334155; font-size:14px;">Nick (Host)</div>
+      <!-- Host View -->
+      <div id="hostView">
+        <div style="margin:10px 0;">
+          <span style="font-size:13px; color:#94a3b8;">Doston ko ye Room Code share karein:</span><br>
+          <div id="hostCodeBadge" style="display:inline-block; background:#0f172a; border:2px dashed #fbbf24; color:#fef08a; padding:6px 14px; border-radius:6px; font-size:20px; font-weight:bold; letter-spacing:2px; margin-top:6px;">----</div>
         </div>
       </div>
 
-      <div style="margin:15px 0;">
-        <button onclick="addOneBot()" style="background:#2563eb; color:#fff; border:none; padding:8px 14px; margin:0 4px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">+ Add 1 Bot</button>
-        <button onclick="autoFillBots()" style="background:#0891b2; color:#fff; border:none; padding:8px 14px; margin:0 4px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">Auto-Fill 5 Players</button>
+      <!-- Join View -->
+      <div id="joinView" style="display:none; margin:15px 0;">
+        <label style="font-size:13px; color:#94a3b8; display:block; margin-bottom:4px;">Host Ka Room Code Dalein:</label>
+        <input type="text" id="joinCodeInput" placeholder="e.g. 4821" style="background:#0f172a; border:2px solid #334155; color:#fff; padding:6px; border-radius:6px; font-size:16px; text-align:center; width:130px; text-transform:uppercase;">
+        <button onclick="joinRoomAction()" style="background:#d97706; color:#fff; border:none; padding:7px 14px; border-radius:6px; font-weight:bold; cursor:pointer; margin-left:6px;">Connect Karein</button>
+        <div id="joinStatusText" style="font-size:12px; margin-top:6px; color:#38bdf8;"></div>
       </div>
 
-      <button onclick="startDarbar()" style="background:#059669; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-size:15px; font-weight:bold; cursor:pointer; width:100%; max-width:280px; margin-top:10px;">
-        📜 Parchiyan Banten (Start)
-      </button>
+      <!-- Common Player List -->
+      <div style="margin:15px 0;">
+        <div style="font-size:13px; color:#38bdf8; font-weight:bold; margin-bottom:6px;">Darbar Ke Khiladi (<span id="pCount">0</span>/5):</div>
+        <div id="playerList" style="display:flex; flex-direction:column; gap:6px; max-width:320px; margin:0 auto;"></div>
+      </div>
 
-      <!-- Friend Join Block -->
-      <div style="margin-top:20px; padding-top:15px; border-top:1px solid #334155;">
-        <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">Dusra dost join karne ke liye:</div>
-        <input type="text" id="joinCodeInput" placeholder="Room Code" style="background:#0f172a; border:2px solid #334155; color:#fff; padding:6px; border-radius:6px; font-size:14px; text-align:center; width:120px; text-transform:uppercase;">
-        <button onclick="joinChamber()" style="background:#d97706; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; margin-left:6px;">Join</button>
+      <!-- Host Action Buttons -->
+      <div id="hostActions" style="margin-top:15px;">
+        <div style="margin-bottom:10px;">
+          <button onclick="addOneBot()" style="background:#2563eb; color:#fff; border:none; padding:7px 12px; margin:0 3px; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer;">+ Add 1 Bot</button>
+          <button onclick="autoFillBots()" style="background:#0891b2; color:#fff; border:none; padding:7px 12px; margin:0 3px; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer;">Auto-Fill 5 Players</button>
+        </div>
+        <button onclick="hostStartDarbar()" style="background:#059669; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-size:15px; font-weight:bold; cursor:pointer; width:100%; max-width:280px;">
+          📜 Parchiyan Banten (Start)
+        </button>
+      </div>
+
+      <div id="clientWaitMsg" style="display:none; color:#fbbf24; font-size:13px; font-weight:bold; margin-top:12px;">
+        Host ke Parchiyan baantne ka intezar karein...
       </div>
     </div>
 
@@ -55,18 +68,23 @@
 
       <div id="parchiBox" style="background:#0f172a; border:3px solid #fbbf24; border-radius:10px; padding:20px; margin:15px auto; max-width:240px;">
         <div style="font-size:12px; color:#94a3b8; margin-bottom:6px;">SHAHI PADD</div>
-        <div id="roleTitle" style="font-size:26px; font-weight:bold; color:#fbbf24;">RAJA</div>
-        <div id="rolePts" style="font-size:14px; color:#4ade80; margin-top:6px; font-weight:bold;">1000 Points</div>
+        <div id="roleTitle" style="font-size:26px; font-weight:bold; color:#fbbf24;">---</div>
+        <div id="rolePts" style="font-size:14px; color:#4ade80; margin-top:6px; font-weight:bold;">---</div>
       </div>
 
       <p id="roleInstruction" style="font-size:13px; color:#e2e8f0; margin:12px 0;"></p>
 
-      <button onclick="openCourt()" style="background:#059669; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer;">
-        Darbar Mein Chalein 🏛️
-      </button>
+      <div id="hostCourtBtnWrap">
+        <button onclick="hostOpenCourt()" style="background:#059669; color:#fff; border:none; padding:10px 20px; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer;">
+          Darbar Sajayein (Next) 🏛️
+        </button>
+      </div>
+      <div id="clientCourtWait" style="display:none; color:#fbbf24; font-size:13px; font-weight:bold;">
+        Raja Darbar saja rahe hain...
+      </div>
     </div>
 
-    <!-- COURTROOM INTERROGATION SCREEN -->
+    <!-- COURT SCREEN -->
     <div id="courtScreen" style="display:none;">
       <h3 style="color:#fbbf24; margin:4px 0;">🏛️ Shahi Darbar</h3>
       
@@ -77,7 +95,6 @@
       </div>
 
       <div id="guessPrompt" style="font-size:14px; font-weight:bold; color:#fde047; margin-bottom:10px;"></div>
-
       <div id="suspectsList" style="display:flex; flex-direction:column; gap:8px; max-width:320px; margin:0 auto 15px auto;"></div>
 
       <div id="botActionRow" style="display:none;">
@@ -87,7 +104,7 @@
       </div>
     </div>
 
-    <!-- ROUND VERDICT & SCOREBOARD SCREEN -->
+    <!-- VERDICT SCREEN -->
     <div id="verdictScreen" style="display:none;">
       <h3 id="verdictHeading" style="margin:4px 0;"></h3>
       <p id="verdictText" style="font-size:14px; font-weight:bold; margin:10px 0;"></p>
@@ -96,36 +113,144 @@
       <table id="scoreTable" style="width:100%; border-collapse:collapse; background:#0f172a; border-radius:6px; overflow:hidden; font-size:13px;">
         <tr style="background:#334155; color:#fbbf24;">
           <th style="padding:6px; border:1px solid #475569;">Khiladi</th>
-          <th style="padding:6px; border:1px solid #475569;">Padd (Role)</th>
-          <th style="padding:6px; border:1px solid #475569;">Iss Round</th>
+          <th style="padding:6px; border:1px solid #475569;">Padd</th>
+          <th style="padding:6px; border:1px solid #475569;">Points</th>
           <th style="padding:6px; border:1px solid #475569;">Total</th>
         </tr>
       </table>
 
-      <button onclick="nextRound()" style="background:#059669; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer; margin-top:16px;">
-        Agla Round Khelein 🔄
-      </button>
+      <div id="hostNextBtnWrap" style="margin-top:16px;">
+        <button onclick="hostNextRound()" style="background:#059669; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer;">
+          Agla Round Khelein 🔄
+        </button>
+      </div>
+      <div id="clientNextWait" style="display:none; color:#fbbf24; font-size:13px; font-weight:bold; margin-top:12px;">
+        Host ke agle round ka intezar karein...
+      </div>
     </div>
 
   </div>
 
   <script>
     var BOT_NAMES = ["Birbal (Bot)", "Tansen (Bot)", "Maan Singh (Bot)", "Bhairav (Bot)", "Mangal (Bot)"];
-    var roomCode = "RJ" + Math.floor(10 + Math.random() * 90);
-    document.getElementById("roomCodeText").innerText = roomCode;
+    var currentMode = 'HOST';
+    var myId = "usr_" + Math.random().toString(36).substr(2, 6);
+    var roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+    var socket = null;
 
     var state = {
-      players: [
-        { id: "p1", name: "Nick", isBot: false, role: "" }
-      ],
-      scores: { "p1": 0 },
+      players: [],
+      scores: {},
       round: 1
     };
 
-    function updateLobbyUI() {
-      var nameInput = document.getElementById("playerNameInput");
-      state.players[0].name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "Host";
+    // Public Secure WebSocket Server
+    function initNetwork(targetRoom) {
+      if (socket) socket.close();
+      socket = new WebSocket("wss://echo.websocket.events");
 
+      socket.onopen = function() {
+        console.log("Connected to room:", targetRoom);
+        if (currentMode === 'JOIN') {
+          var name = document.getElementById("playerNameInput").value.trim() || "Guest";
+          sendNet({ type: 'PLAYER_JOIN_REQ', id: myId, name: name });
+          document.getElementById("joinStatusText").innerText = "Chamber connect ho gaya! Host ka wait karein...";
+        }
+      };
+
+      socket.onmessage = function(ev) {
+        try {
+          var data = JSON.parse(ev.data);
+          if (data && data.room === roomCode) {
+            handleIncoming(data.payload);
+          }
+        } catch(e) {}
+      };
+    }
+
+    function sendNet(payload) {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ room: roomCode, payload: payload }));
+      }
+    }
+
+    function handleIncoming(msg) {
+      if (currentMode === 'HOST') {
+        if (msg.type === 'PLAYER_JOIN_REQ') {
+          var exists = state.players.some(function(p) { return p.id === msg.id; });
+          if (!exists && state.players.length < 5) {
+            state.players.push({ id: msg.id, name: msg.name, isBot: false, role: "" });
+            state.scores[msg.id] = 0;
+            updateRosterUI();
+            sendNet({ type: 'ROSTER_SYNC', players: state.players, scores: state.scores });
+          }
+        } else if (msg.type === 'SIPAHI_VOTE') {
+          executeVerdict(msg.suspectId);
+        }
+      } else {
+        if (msg.type === 'ROSTER_SYNC') {
+          state.players = msg.players;
+          state.scores = msg.scores;
+          renderRosterList();
+        } else if (msg.type === 'START_PARCHI') {
+          state.players = msg.players;
+          state.round = msg.round;
+          renderParchiScreen();
+        } else if (msg.type === 'GO_COURT') {
+          state.players = msg.players;
+          renderCourtScreen();
+        } else if (msg.type === 'ROUND_OVER') {
+          state.players = msg.players;
+          state.scores = msg.scores;
+          renderVerdictScreen(msg.isCorrect, msg.chosenName, msg.roundPts);
+        }
+      }
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      if (mode === 'HOST') {
+        document.getElementById('btnHostTab').style.background = '#059669';
+        document.getElementById('btnHostTab').style.color = '#fff';
+        document.getElementById('btnJoinTab').style.background = '#334155';
+        document.getElementById('btnJoinTab').style.color = '#94a3b8';
+        document.getElementById('hostView').style.display = 'block';
+        document.getElementById('joinView').style.display = 'none';
+        document.getElementById('hostActions').style.display = 'block';
+        document.getElementById('clientWaitMsg').style.display = 'none';
+
+        var myName = document.getElementById("playerNameInput").value.trim() || "Host";
+        state.players = [{ id: myId, name: myName + " (Host)", isBot: false, role: "" }];
+        state.scores[myId] = 0;
+        updateRosterUI();
+        initNetwork(roomCode);
+      } else {
+        document.getElementById('btnJoinTab').style.background = '#059669';
+        document.getElementById('btnJoinTab').style.color = '#fff';
+        document.getElementById('btnHostTab').style.background = '#334155';
+        document.getElementById('btnHostTab').style.color = '#94a3b8';
+        document.getElementById('hostView').style.display = 'none';
+        document.getElementById('joinView').style.display = 'block';
+        document.getElementById('hostActions').style.display = 'none';
+        document.getElementById('clientWaitMsg').style.display = 'block';
+        state.players = [];
+        renderRosterList();
+      }
+    }
+
+    function joinRoomAction() {
+      var code = document.getElementById("joinCodeInput").value.trim().toUpperCase();
+      if (!code) { alert("Code dalein!"); return; }
+      roomCode = code;
+      initNetwork(code);
+    }
+
+    function updateRosterUI() {
+      renderRosterList();
+      sendNet({ type: 'ROSTER_SYNC', players: state.players, scores: state.scores });
+    }
+
+    function renderRosterList() {
       var list = document.getElementById("playerList");
       list.innerHTML = "";
       for (var i = 0; i < state.players.length; i++) {
@@ -139,19 +264,13 @@
     }
 
     function addOneBot() {
-      if (state.players.length >= 5) {
-        alert("Darbar mein poore 5 khiladi ho chuke hain!");
-        return;
-      }
-      var bIdx = 0;
-      for (var i = 0; i < state.players.length; i++) {
-        if (state.players[i].isBot) bIdx++;
-      }
-      var bName = BOT_NAMES[bIdx % BOT_NAMES.length];
+      if (state.players.length >= 5) { alert("5 khiladi poore hain!"); return; }
+      var bCount = state.players.filter(p => p.isBot).length;
+      var bName = BOT_NAMES[bCount % BOT_NAMES.length];
       var bId = "bot_" + Math.random().toString(36).substr(2, 5);
       state.players.push({ id: bId, name: bName, isBot: true, role: "" });
       state.scores[bId] = 0;
-      updateLobbyUI();
+      updateRosterUI();
     }
 
     function autoFillBots() {
@@ -160,126 +279,105 @@
       }
     }
 
-    function joinChamber() {
-      var code = document.getElementById("joinCodeInput").value.trim().toUpperCase();
-      var name = document.getElementById("playerNameInput").value.trim() || "Guest";
-      if (!code) {
-        alert("Pehle Room Code dalein!");
-        return;
-      }
-      roomCode = code;
-      document.getElementById("roomCodeText").innerText = code;
-      alert("Chamber " + code + " mein pravesh hua!");
-      autoFillBots();
-    }
-
-    function startDarbar() {
-      var nameInput = document.getElementById("playerNameInput");
-      state.players[0].name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : "Host";
-
+    function hostStartDarbar() {
       if (state.players.length < 5) {
-        alert("Is game ke liye poore 5 khiladi chahiye! Auto-Fill button daba kar bots add karein.");
+        alert("Poore 5 khiladi hone chahiye! Auto-Fill se bots daal sakte hain.");
         return;
       }
-
-      // Shuffle 5 traditional chits
-      var chits = ["Raja", "Mantri", "Sipahi", "Daku", "Chor"];
-      for (var i = chits.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var temp = chits[i];
-        chits[i] = chits[j];
-        chits[j] = temp;
-      }
-
+      var chits = ["Raja", "Mantri", "Sipahi", "Daku", "Chor"].sort(() => Math.random() - 0.5);
       for (var i = 0; i < 5; i++) {
         state.players[i].role = chits[i];
       }
+      sendNet({ type: 'START_PARCHI', players: state.players, round: state.round });
+      renderParchiScreen();
+    }
 
+    function renderParchiScreen() {
       document.getElementById("lobbyScreen").style.display = "none";
       document.getElementById("courtScreen").style.display = "none";
       document.getElementById("verdictScreen").style.display = "none";
       document.getElementById("parchiScreen").style.display = "block";
 
-      var me = state.players[0];
-      document.getElementById("roleTitle").innerText = me.role.toUpperCase();
-
-      var pts = "0 Points";
-      var color = "#94a3b8";
-      var instruct = "";
-
-      if (me.role === "Raja") {
-        pts = "1,000 Points"; color = "#fbbf24";
-        instruct = "Aap Raja hain! Darbar bulayein aur Mantri se Daku ko pakadwayein.";
-      } else if (me.role === "Mantri") {
-        pts = "800 Points"; color = "#38bdf8";
-        instruct = "Aap Mantri hain! Raja ke 'Mera Mantri Kaun' poochte hi hazir hon.";
-      } else if (me.role === "Sipahi") {
-        pts = "500 Points"; color = "#4ade80";
-        instruct = "Aap Sipahi hain! Dono sandigdh darbaariyon mein se DAKU ko pehchanein.";
-      } else if (me.role === "Daku") {
-        pts = "300 Points (Sipahi chuka toh +500 Churaoge!)"; color = "#ef4444";
-        instruct = "Aap Daku hain! Shaant rahein aur aam darbaari hone ka natak karein.";
+      if (currentMode === 'HOST') {
+        document.getElementById("hostCourtBtnWrap").style.display = "block";
+        document.getElementById("clientCourtWait").style.display = "none";
       } else {
-        pts = "0 Points"; color = "#94a3b8";
-        instruct = "Aap Chor hain! Sipahi ka shaq Daku par daalne ki koshish karein.";
+        document.getElementById("hostCourtBtnWrap").style.display = "none";
+        document.getElementById("clientCourtWait").style.display = "block";
       }
 
-      document.getElementById("roleTitle").style.color = color;
+      var me = state.players.find(p => p.id === myId) || state.players[0];
+      document.getElementById("roleTitle").innerText = me.role.toUpperCase();
+
+      var pts = "0 Points", col = "#94a3b8", inst = "";
+      if (me.role === "Raja") {
+        pts = "1,000 Points"; col = "#fbbf24";
+        inst = "Aap Raja hain! Darbar sajayein aur Daku ko pakadwayein.";
+      } else if (me.role === "Mantri") {
+        pts = "800 Points"; col = "#38bdf8";
+        inst = "Aap Mantri hain! Raja ke bulaane par aage aana hoga.";
+      } else if (me.role === "Sipahi") {
+        pts = "500 Points"; col = "#4ade80";
+        inst = "Aap Sipahi hain! Daku ko pehchan kar pakadein.";
+      } else if (me.role === "Daku") {
+        pts = "300 Points (+500 Stolen agar Sipahi chuka!)"; col = "#ef4444";
+        inst = "Aap Daku hain! Shaant rahein aur shaq Chor par daalein.";
+      } else {
+        pts = "0 Points"; col = "#94a3b8";
+        inst = "Aap Chor hain! Khud ko bachaane ke liye aam darbaari bane rahein.";
+      }
+
+      document.getElementById("roleTitle").style.color = col;
       document.getElementById("rolePts").innerText = pts;
-      document.getElementById("roleInstruction").innerText = instruct;
+      document.getElementById("roleInstruction").innerText = inst;
     }
 
-    function openCourt() {
+    function hostOpenCourt() {
+      sendNet({ type: 'GO_COURT', players: state.players });
+      renderCourtScreen();
+    }
+
+    function renderCourtScreen() {
       document.getElementById("parchiScreen").style.display = "none";
       document.getElementById("courtScreen").style.display = "block";
 
-      var raja = null, mantri = null, sipahi = null;
-      for (var i = 0; i < state.players.length; i++) {
-        if (state.players[i].role === "Raja") raja = state.players[i];
-        if (state.players[i].role === "Mantri") mantri = state.players[i];
-        if (state.players[i].role === "Sipahi") sipahi = state.players[i];
-      }
+      var raja = state.players.find(p => p.role === "Raja");
+      var mantri = state.players.find(p => p.role === "Mantri");
+      var sipahi = state.players.find(p => p.role === "Sipahi");
 
       document.getElementById("rajaName").innerText = raja.name;
       document.getElementById("mantriName").innerText = mantri.name;
       document.getElementById("sipahiName").innerText = sipahi.name;
 
-      var me = state.players[0];
+      var me = state.players.find(p => p.id === myId) || state.players[0];
       var isSipahi = (me.id === sipahi.id);
+      var suspects = state.players.filter(p => p.role === "Chor" || p.role === "Daku");
 
       var prompt = document.getElementById("guessPrompt");
       var sList = document.getElementById("suspectsList");
       sList.innerHTML = "";
 
-      var suspects = [];
-      for (var i = 0; i < state.players.length; i++) {
-        if (state.players[i].role === "Chor" || state.players[i].role === "Daku") {
-          suspects.push(state.players[i]);
-        }
-      }
-
       if (isSipahi) {
-        prompt.innerText = "Aap Sipahi hain! In dono mein se DAKU kaun hai? Chunao karein:";
+        prompt.innerText = "Aap Sipahi hain! Daku kaun hai? Click karein:";
         document.getElementById("botActionRow").style.display = "none";
 
-        for (var i = 0; i < suspects.length; i++) {
-          (function(s) {
-            var btn = document.createElement("button");
-            btn.style.cssText = "background:#dc2626; color:#fff; border:none; padding:10px 14px; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer;";
-            btn.innerText = "⚔️ " + s.name + " Daku Hai!";
-            btn.onclick = function() { makeGuess(s.id); };
-            sList.appendChild(btn);
-          })(suspects[i]);
-        }
+        suspects.forEach(function(s) {
+          var btn = document.createElement("button");
+          btn.style.cssText = "background:#dc2626; color:#fff; border:none; padding:10px 14px; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer;";
+          btn.innerText = "⚔️ " + s.name + " Daku Hai!";
+          btn.onclick = function() { sipahiPick(s.id); };
+          sList.appendChild(btn);
+        });
       } else {
-        prompt.innerText = "Sipahi (" + sipahi.name + ") Daku ko pehchan raha hai...";
-        for (var i = 0; i < suspects.length; i++) {
-          var box = document.createElement("div");
-          box.style.cssText = "background:#0f172a; padding:8px 12px; border-radius:6px; border:1px solid #334155; font-size:14px;";
-          box.innerText = "Sandigdh: " + suspects[i].name;
-          sList.appendChild(box);
-        }
-        if (sipahi.isBot) {
+        prompt.innerText = "Sipahi (" + sipahi.name + ") Daku ko dhoondh raha hai...";
+        suspects.forEach(function(s) {
+          var b = document.createElement("div");
+          b.style.cssText = "background:#0f172a; padding:8px 12px; border-radius:6px; border:1px solid #334155; font-size:14px;";
+          b.innerText = "Sandigdh: " + s.name;
+          sList.appendChild(b);
+        });
+
+        if (sipahi.isBot && currentMode === 'HOST') {
           document.getElementById("botActionRow").style.display = "block";
         } else {
           document.getElementById("botActionRow").style.display = "none";
@@ -287,88 +385,107 @@
       }
     }
 
-    function botSipahiVerdict() {
-      var suspects = [];
-      for (var i = 0; i < state.players.length; i++) {
-        if (state.players[i].role === "Chor" || state.players[i].role === "Daku") {
-          suspects.push(state.players[i]);
-        }
+    function sipahiPick(suspectId) {
+      if (currentMode === 'HOST') {
+        executeVerdict(suspectId);
+      } else {
+        sendNet({ type: 'SIPAHI_VOTE', suspectId: suspectId });
+        document.getElementById("guessPrompt").innerText = "Aapka aadesh Shahi Darbar bhej diya gaya hai...";
       }
-      var pick = suspects[Math.floor(Math.random() * suspects.length)];
-      makeGuess(pick.id);
     }
 
-    function makeGuess(suspectId) {
-      var daku = null, sipahi = null, chosen = null;
-      for (var i = 0; i < state.players.length; i++) {
-        if (state.players[i].role === "Daku") daku = state.players[i];
-        if (state.players[i].role === "Sipahi") sipahi = state.players[i];
-        if (state.players[i].id === suspectId) chosen = state.players[i];
-      }
+    function botSipahiVerdict() {
+      var suspects = state.players.filter(p => p.role === "Chor" || p.role === "Daku");
+      var pick = suspects[Math.floor(Math.random() * suspects.length)];
+      executeVerdict(pick.id);
+    }
+
+    function executeVerdict(suspectId) {
+      var daku = state.players.find(p => p.role === "Daku");
+      var sipahi = state.players.find(p => p.role === "Sipahi");
+      var chosen = state.players.find(p => p.id === suspectId);
 
       var isCorrect = (chosen.id === daku.id);
       var roundPts = {};
 
-      for (var i = 0; i < state.players.length; i++) {
-        var p = state.players[i];
+      state.players.forEach(function(p) {
         if (p.role === "Raja") roundPts[p.id] = 1000;
         else if (p.role === "Mantri") roundPts[p.id] = 800;
         else if (p.role === "Chor") roundPts[p.id] = 0;
-      }
+      });
 
       if (isCorrect) {
         roundPts[sipahi.id] = 500;
         roundPts[daku.id] = 0;
       } else {
         roundPts[sipahi.id] = 0;
-        roundPts[daku.id] = 300 + 500; // Daku steals Sipahi's 500
+        roundPts[daku.id] = 300 + 500;
       }
 
-      for (var i = 0; i < state.players.length; i++) {
-        var pid = state.players[i].id;
-        state.scores[pid] = (state.scores[pid] || 0) + roundPts[pid];
-      }
+      state.players.forEach(function(p) {
+        state.scores[p.id] = (state.scores[p.id] || 0) + roundPts[p.id];
+      });
 
+      sendNet({
+        type: 'ROUND_OVER',
+        players: state.players,
+        scores: state.scores,
+        isCorrect: isCorrect,
+        chosenName: chosen.name,
+        roundPts: roundPts
+      });
+
+      renderVerdictScreen(isCorrect, chosen.name, roundPts);
+    }
+
+    function renderVerdictScreen(isCorrect, chosenName, roundPts) {
       document.getElementById("courtScreen").style.display = "none";
       document.getElementById("verdictScreen").style.display = "block";
 
+      if (currentMode === 'HOST') {
+        document.getElementById("hostNextBtnWrap").style.display = "block";
+        document.getElementById("clientNextWait").style.display = "none";
+      } else {
+        document.getElementById("hostNextBtnWrap").style.display = "none";
+        document.getElementById("clientNextWait").style.display = "block";
+      }
+
       var h = document.getElementById("verdictHeading");
       var t = document.getElementById("verdictText");
+      var daku = state.players.find(p => p.role === "Daku");
 
       if (isCorrect) {
-        h.innerText = "⚔️ DAKU RANGEY HAATHO PAKDA GAYA!";
+        h.innerText = "⚔️ DAKU PAKDA GAYA!";
         h.style.color = "#4ade80";
-        t.innerText = "Sipahi ne bilkul sahi pehchana! " + chosen.name + " hi Daku tha. Sipahi ko poore 500 points mile!";
+        t.innerText = "Sipahi ne sahi pehchana! " + chosenName + " hi Daku tha. Sipahi ko poore 500 points mile!";
         t.style.color = "#86efac";
       } else {
-        h.innerText = "🗡️ DAKU BACH NIKLA!";
+        h.innerText = "🗡️ DAKU BHAAG NIKLA!";
         h.style.color = "#ef4444";
-        t.innerText = "Galat faisla! Sipahi ne " + chosen.name + " (Chor) ko pakad liya. Asli Daku (" + daku.name + ") Sipahi ke 500 points chura kar bhaag gaya!";
+        t.innerText = "Galat pehchana! " + chosenName + " Chor tha. Asli Daku (" + daku.name + ") Sipahi ke 500 points chura kar bhaag gaya!";
         t.style.color = "#fca5a5";
       }
 
       var tbl = document.getElementById("scoreTable");
-      while (tbl.rows.length > 1) {
-        tbl.deleteRow(1);
-      }
+      while (tbl.rows.length > 1) tbl.deleteRow(1);
 
-      for (var i = 0; i < state.players.length; i++) {
-        var p = state.players[i];
-        var row = tbl.insertRow(-1);
-        row.style.borderBottom = "1px solid #334155";
-        row.innerHTML = "<td style='padding:6px; border:1px solid #334155; font-weight:bold;'>" + p.name + "</td>" +
-                        "<td style='padding:6px; border:1px solid #334155; color:#fbbf24;'>" + p.role + "</td>" +
-                        "<td style='padding:6px; border:1px solid #334155; color:#4ade80;'>+" + roundPts[p.id] + "</td>" +
-                        "<td style='padding:6px; border:1px solid #334155; font-weight:bold; color:#fde047;'>" + state.scores[p.id] + "</td>";
-      }
+      state.players.forEach(function(p) {
+        var r = tbl.insertRow(-1);
+        r.innerHTML = "<td style='padding:6px; border:1px solid #334155; font-weight:bold;'>" + p.name + "</td>" +
+                      "<td style='padding:6px; border:1px solid #334155; color:#fbbf24;'>" + p.role + "</td>" +
+                      "<td style='padding:6px; border:1px solid #334155; color:#4ade80;'>+" + roundPts[p.id] + "</td>" +
+                      "<td style='padding:6px; border:1px solid #334155; font-weight:bold; color:#fde047;'>" + state.scores[p.id] + "</td>";
+      });
     }
 
-    function nextRound() {
+    function hostNextRound() {
       state.round++;
-      startDarbar();
+      hostStartDarbar();
     }
 
-    updateLobbyUI();
+    // Initialize Host
+    document.getElementById("hostCodeBadge").innerText = roomCode;
+    setMode('HOST');
   </script>
 </body>
 </html>
