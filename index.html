@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Traitors: Castle of Shadows</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=MedievalSharp&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            cinzel: ['Cinzel', 'serif'],
+            medieval: ['MedievalSharp', 'cursive'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            traitor: {
+              red: '#881337',
+              dark: '#4c0519',
+              accent: '#e11d48',
+            },
+            faithful: {
+              gold: '#ca8a04',
+              bright: '#facc15',
+              muted: '#854d0e',
+            },
+            castle: {
+              950: '#06070a',
+              900: '#0c0f17',
+              800: '#161b26',
+              700: '#232b3c',
+            }
+          },
+          animation: {
+            'torch-flicker': 'flicker 3s infinite alternate ease-in-out',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            flicker: {
+              '0%, 100%': { opacity: '0.85', transform: 'scale(1)' },
+              '50%': { opacity: '0.55', transform: 'scale(0.96)' },
+              '25%': { opacity: '0.95', transform: 'scale(1.04)' },
+              '75%': { opacity: '0.7', transform: 'scale(0.98)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Gothic Scrollbars and Atmospheric Gradients */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0c0f17;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    .wax-seal {
+      background: radial-gradient(circle, #991b1b 0%, #450a0a 100%);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.8), inset 0 2px 4px rgba(255,255,255,0.25);
+    }
+    .gothic-border {
+      border: 1px solid rgba(202, 138, 4, 0.25);
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+    }
+    .glass-dungeon {
+      background: rgba(12, 15, 23, 0.88);
+      backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body class="bg-castle-950 text-slate-200 font-sans min-h-screen flex flex-col selection:bg-rose-950 selection:text-amber-200 overflow-x-hidden relative">
+
+  <!-- Ambient Torch Glow Effects -->
+  <div class="fixed top-0 left-0 w-96 h-96 bg-amber-700/10 rounded-full blur-[120px] pointer-events-none animate-torch-flicker"></div>
+  <div class="fixed bottom-0 right-0 w-[420px] h-[420px] bg-red-950/15 rounded-full blur-[140px] pointer-events-none animate-torch-flicker" style="animation-delay: 1.5s;"></div>
+
+  <!-- Header / Navigation Bar -->
+  <header class="border-b border-amber-900/30 bg-castle-900/90 backdrop-blur z-20 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-full wax-seal flex items-center justify-center text-amber-200 font-cinzel font-black text-xs border border-amber-500/30">
+        †
+      </div>
+      <div>
+        <h1 class="font-cinzel tracking-widest text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600">
+          THE TRAITORS
+        </h1>
+        <p class="text-[10px] tracking-wider text-slate-400 uppercase font-cinzel">Castle of Shadows</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center space-x-3 text-xs">
+      <button id="soundToggleBtn" class="px-2.5 py-1.5 rounded bg-castle-800 border border-slate-700 hover:border-amber-600 transition flex items-center space-x-1.5 text-slate-300">
+        <span id="soundIcon">🔊</span>
+        <span class="hidden sm:inline">Audio</span>
+      </button>
+      <div id="roomBadge" class="hidden px-2.5 py-1 bg-amber-950/40 border border-amber-600/40 rounded text-amber-300 font-cinzel font-semibold tracking-wider">
+        ROOM: <span id="displayRoomCode" class="font-mono font-bold text-white">-----</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Bollywood Suspense BGM Jukebox Bar -->
+  <div class="bg-gradient-to-r from-red-950/90 via-castle-900 to-amber-950/90 border-b border-amber-600/30 px-4 py-2 flex flex-wrap items-center justify-between text-xs z-20 gap-2">
+    <div class="flex items-center space-x-2 text-amber-200 font-cinzel">
+      <span class="animate-pulse text-rose-500">🎻</span>
+      <span class="font-bold text-[11px] tracking-wider uppercase text-amber-400">Bollywood Thriller Score:</span>
+      <select id="bgmSelector" class="bg-castle-950 border border-amber-700/50 rounded px-2 py-1 text-slate-200 text-xs focus:outline-none focus:border-amber-400">
+        <option value="0">1. Raat Ka Sannata (Eerie Tanpura & Drone)</option>
+        <option value="1">2. Talaash (Suspense Tabla & Strings)</option>
+        <option value="2">3. Dhokha (Dramatic Chase Pulsing)</option>
+        <option value="3">4. Round Table Climax (High Stakes Brass & Heartbeat)</option>
+      </select>
+    </div>
+    <div class="flex items-center space-x-3">
+      <button id="btnToggleBGM" class="px-3 py-1 rounded bg-amber-600/20 border border-amber-500/50 hover:bg-amber-600/30 text-amber-300 font-cinzel text-xs flex items-center space-x-1">
+        <span id="bgmPlayIcon">▶</span>
+        <span id="bgmPlayLabel">Play Music</span>
+      </button>
+      <div class="flex items-center space-x-1">
+        <span class="text-slate-400 text-[10px]">Vol:</span>
+        <input type="range" id="bgmVolume" min="0" max="1" step="0.05" value="0.3" class="w-16 accent-amber-500 cursor-pointer">
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Dynamic Game Container -->
+  <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center items-center relative z-10">
+
+    <!-- ALERT / MESSAGE MODAL DIALOG (No alert() used) -->
+    <div id="modalOverlay" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-castle-900 border border-amber-700/50 rounded-xl p-6 max-w-md w-full shadow-2xl text-center space-y-4">
+        <div id="modalIcon" class="text-3xl">⚔️</div>
+        <h3 id="modalTitle" class="font-cinzel text-xl text-amber-300 font-bold tracking-wide">Decree</h3>
+        <p id="modalMessage" class="text-slate-300 text-sm leading-relaxed"></p>
+        <button id="modalCloseBtn" class="px-6 py-2 bg-gradient-to-r from-amber-700 to-amber-900 text-amber-100 rounded-lg font-cinzel tracking-wider text-sm hover:from-amber-600 hover:to-amber-800 transition">
+          I Understand
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW 1: LANDING & ROOM CREATION / JOIN -->
+    <section id="viewLanding" class="w-full max-w-md space-y-6 animate-fade-in">
+      <div class="text-center space-y-2">
+        <div class="inline-block p-4 rounded-full bg-castle-900/80 border border-amber-600/30 shadow-inner mb-2">
+          <svg class="w-12 h-12 text-amber-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 21l-8-4.5v-9L12 3l8 4.5v9L12 21z M12 3v18 M4 7.5l8 4.5 8-4.5"/>
+          </svg>
+        </div>
+        <h2 class="font-cinzel text-3xl sm:text-4xl font-bold tracking-wider text-slate-100">ENTER THE CONCLAVE</h2>
+        <p class="text-xs sm:text-sm text-slate-400 font-sans">Trust no one. Unmask the Traitor before darkness claims the Faithful.</p>
+      </div>
+
+      <div class="glass-dungeon p-6 rounded-2xl gothic-border space-y-5">
+        <div>
+          <label class="block text-xs uppercase font-cinzel text-amber-400/90 tracking-widest mb-1.5">Player Identity</label>
+          <input type="text" id="inputPlayerName" maxlength="14" placeholder="Enter your alias (e.g., Lord Alistair)" class="w-full bg-castle-950 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 font-medium">
+        </div>
+
+        <div class="pt-2 border-t border-slate-800">
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <button id="tabCreateBtn" class="py-2 text-xs font-cinzel tracking-wider rounded-lg border border-amber-600/60 bg-amber-950/40 text-amber-200">
+              Host Chamber
+            </button>
+            <button id="tabJoinBtn" class="py-2 text-xs font-cinzel tracking-wider rounded-lg border border-slate-800 bg-castle-800/40 text-slate-400">
+              Join Gathering
+            </button>
+          </div>
+
+          <!-- Host Pane -->
+          <div id="paneHost" class="space-y-3">
+            <button id="btnCreateRoom" class="w-full py-3 rounded-lg bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 text-black font-cinzel font-bold text-sm tracking-widest hover:brightness-110 active:scale-[0.99] transition shadow-lg shadow-amber-900/30">
+              CREATE CASTLE ROOM
+            </button>
+            <p class="text-[11px] text-slate-400 text-center italic">Best played with 5 players (1 Traitor, 4 Faithfuls)</p>
+          </div>
+
+          <!-- Join Pane -->
+          <div id="paneJoin" class="space-y-3 hidden">
+            <input type="text" id="inputRoomCode" placeholder="Enter 5-Letter Code (e.g. CASTL)" maxlength="6" class="w-full bg-castle-950 border border-slate-700 rounded-lg px-4 py-2.5 text-sm uppercase text-center font-mono tracking-widest text-white focus:outline-none focus:border-amber-500">
+            <button id="btnJoinRoom" class="w-full py-3 rounded-lg bg-gradient-to-r from-slate-700 to-slate-900 border border-slate-600 text-amber-300 font-cinzel font-bold text-sm tracking-widest hover:bg-slate-700 active:scale-[0.99] transition">
+              ENTER GATES
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: LOBBY -->
+    <section id="viewLobby" class="w-full max-w-2xl space-y-6 hidden animate-fade-in">
+      <div class="glass-dungeon p-6 sm:p-8 rounded-2xl gothic-border relative">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-5">
+          <div>
+            <span class="text-xs uppercase font-cinzel tracking-widest text-amber-500">Castle Drawing Room</span>
+            <h2 class="text-2xl font-cinzel font-bold text-white">The Assembly</h2>
+          </div>
+          <div class="flex items-center space-x-2 bg-castle-950 px-4 py-2 rounded-xl border border-slate-800">
+            <span class="text-xs text-slate-400 font-cinzel">ROOM CODE:</span>
+            <span id="lobbyRoomCode" class="text-lg font-mono font-bold text-amber-400 tracking-wider">-----</span>
+            <button id="btnCopyCode" title="Copy code" class="p-1 hover:text-amber-300 text-slate-400 text-xs">📋</button>
+          </div>
+        </div>
+
+        <!-- Player slots (5 target) -->
+        <div class="mt-6 space-y-4">
+          <div class="flex justify-between items-center text-xs font-cinzel text-slate-400">
+            <span>GUESTS ARRIVED (<span id="playerCount">0</span>/5)</span>
+            <span class="text-amber-500 italic">5 players recommended</span>
+          </div>
+
+          <div id="lobbyPlayerList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Dynamic Player Cards inserted here -->
+          </div>
+        </div>
+
+        <!-- Host Controls -->
+        <div class="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-xs text-slate-400">
+            <span id="lobbyStatusHint">Waiting for the Host to initiate the Conclave...</span>
+          </div>
+          <div class="flex items-center space-x-3 w-full sm:w-auto">
+            <button id="btnStartGame" class="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-red-800 via-rose-700 to-red-900 text-amber-100 font-cinzel font-bold tracking-widest text-sm hover:brightness-110 active:scale-[0.99] transition disabled:opacity-40 disabled:cursor-not-allowed shadow-xl shadow-rose-950/50">
+              TAP SHOULDERS (START WITH BOTS)
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: SECRET ROLE REVEAL MODAL / OVERLAY SCREEN -->
+    <section id="viewRoleReveal" class="w-full max-w-lg hidden space-y-6 text-center animate-fade-in">
+      <div id="roleCard" class="glass-dungeon p-8 rounded-3xl gothic-border relative overflow-hidden transition-all duration-700 transform">
+        <!-- Torchlight overlay inside card -->
+        <div id="roleBadgeDeco" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-3xl font-cinzel font-black mb-4 shadow-2xl">
+          ?
+        </div>
+        
+        <span class="text-xs tracking-widest uppercase font-cinzel text-slate-400">Your Sworn Identity</span>
+        <h2 id="roleTitle" class="text-3xl sm:text-4xl font-cinzel font-black tracking-wider my-2">REVEALING...</h2>
+        <p id="roleDescription" class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans max-w-sm mx-auto mb-6">
+          Keep this screen guarded from prying eyes. Your allegiance will determine your fate in the castle.
+        </p>
+
+        <div id="roleSecretBox" class="p-3 bg-black/50 rounded-xl border border-slate-800 text-xs text-slate-400 mb-6">
+          <!-- Secret specific instructions -->
+        </div>
+
+        <button id="btnConfirmRole" class="px-8 py-3 rounded-xl bg-castle-800 border border-amber-600/50 text-amber-200 font-cinzel font-bold tracking-widest text-xs hover:bg-castle-700 transition">
+          I SWEAR MY SECRECY
+        </button>
+      </div>
+    </section>
+
+    <!-- VIEW 4: ACTIVE GAME ARENA (Phases: Night Conclave, Breakfast, Round Table, Banishment) -->
+    <section id="viewGameArena" class="w-full space-y-6 hidden animate-fade-in">
+      
+      <!-- Top Status Bar: Phase, Round & Silver Pot -->
+      <div class="glass-dungeon p-4 rounded-2xl gothic-border flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <div id="phaseIcon" class="w-10 h-10 rounded-xl bg-slate-900 border border-amber-600/30 flex items-center justify-center text-xl">
+            🌙
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span id="currentPhaseTag" class="text-[10px] font-cinzel font-bold tracking-widest uppercase px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700/40">
+                THE NIGHT CONCLAVE
+              </span>
+              <span class="text-xs text-slate-400 font-cinzel">ROUND <span id="roundNumber">1</span></span>
+            </div>
+            <h3 id="phaseHeadline" class="text-base sm:text-lg font-cinzel font-bold text-white">The Castle Sleeps</h3>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-6 text-right">
+          <div>
+            <div class="text-[10px] uppercase font-cinzel tracking-wider text-slate-400">Prize Fund</div>
+            <div class="text-base font-cinzel font-bold text-amber-400">£<span id="prizePotAmount">25,000</span></div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase font-cinzel tracking-wider text-slate-400">My Loyalty</div>
+            <div id="myLoyaltyTag" class="text-xs font-cinzel font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+              UNKNOWN
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Interactive Board: Left (Action arena) & Right (Castle Assembly & Crypt) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left/Center Stage: Interactive Phase Card -->
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- Dynamic Phase Panel -->
+          <div id="phasePanel" class="glass-dungeon p-6 sm:p-8 rounded-2xl gothic-border min-h-[380px] flex flex-col justify-between relative overflow-hidden">
+            <!-- Content will be injected dynamically depending on game phase -->
+            <div id="phaseContent" class="space-y-4">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Action Area / Target Selection / Confirmation -->
+            <div id="phaseActionArea" class="pt-6 border-t border-slate-800/80 mt-6">
+              <!-- Dynamically populated buttons / choices -->
+            </div>
+          </div>
+
+          <!-- Interactive Cast Whispers / In-game Round Log -->
+          <div class="glass-dungeon p-4 sm:p-5 rounded-2xl gothic-border">
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-cinzel text-xs tracking-wider text-amber-400/90 uppercase font-bold flex items-center space-x-2">
+                <span>🏰</span>
+                <span>Castle Whispers & Ledger</span>
+              </h4>
+              <span class="text-[10px] text-slate-500 font-mono">Live Broadcast</span>
+            </div>
+            <div id="chatHistory" class="h-32 overflow-y-auto space-y-2 p-3 bg-castle-950/90 rounded-xl border border-slate-800 text-xs font-sans">
+              <!-- Whispers log -->
+            </div>
+            <form id="chatForm" class="mt-3 flex gap-2">
+              <input type="text" id="chatInput" maxlength="120" placeholder="Converse with the players at the table..." class="flex-1 bg-castle-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 font-sans">
+              <button type="submit" class="px-4 py-1.5 rounded-lg bg-castle-800 hover:bg-castle-700 text-amber-300 font-cinzel text-xs font-bold border border-slate-600 transition">
+                Speak
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- Right Side: The Living & The Crypt (Players status) -->
+        <div class="space-y-6">
+          <div class="glass-dungeon p-5 rounded-2xl gothic-border">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+              <h4 class="font-cinzel text-sm font-bold tracking-wider text-white">THE GATHERING</h4>
+              <span class="text-[11px] font-mono text-slate-400"><span id="livingCount">5</span> Remaining</span>
+            </div>
+            <div id="playerRoster" class="space-y-2.5">
+              <!-- Living and dead player chips -->
+            </div>
+          </div>
+
+          <!-- Rules & Objective Quick Help -->
+          <div class="p-4 rounded-xl bg-castle-950/70 border border-slate-800 text-xs text-slate-400 space-y-2">
+            <p class="font-cinzel font-bold text-amber-400 uppercase text-[11px]">Castle Rulebook:</p>
+            <ul class="list-disc list-inside space-y-1 leading-relaxed text-[11px]">
+              <li><strong class="text-rose-400">Traitor:</strong> Murder 1 Faithful at night. Deceive during day. Win if you reach final 2.</li>
+              <li><strong class="text-amber-300">Faithfuls:</strong> Debate at the Round Table and vote out the Traitor to win the prize pot!</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- VIEW 5: FINAL RESOLUTION (VICTORY SCREEN) -->
+    <section id="viewGameEnd" class="w-full max-w-xl hidden space-y-6 text-center animate-fade-in">
+      <div class="glass-dungeon p-8 sm:p-10 rounded-3xl gothic-border relative overflow-hidden">
+        <div id="endVictoryIcon" class="w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl mb-4 border border-amber-600/40">
+          🏆
+        </div>
+        <span class="text-xs font-cinzel uppercase tracking-widest text-slate-400">Final Verdict</span>
+        <h2 id="endVictoryTitle" class="text-3xl sm:text-4xl font-cinzel font-black tracking-wider my-2">THE FAITHFUL TRIUMPH</h2>
+        <p id="endVictorySubtitle" class="text-sm text-slate-300 max-w-md mx-auto mb-6">
+          The Traitor has been unmasked and expelled into the cold Scottish night!
+        </p>
+
+        <!-- Final Role Reveal Table -->
+        <div class="bg-castle-950/80 rounded-2xl p-4 border border-slate-800 mb-6 text-left">
+          <h4 class="text-xs uppercase font-cinzel font-bold text-amber-400 tracking-wider mb-3 text-center">Unveiled Identities</h4>
+          <div id="endRosterList" class="space-y-2">
+            <!-- Final player card list with revealed roles -->
+          </div>
+        </div>
+
+        <button id="btnPlayAgain" class="px-8 py-3 rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 text-amber-100 font-cinzel font-bold tracking-widest text-xs hover:brightness-110 active:scale-[0.99] transition shadow-lg">
+          RETURN TO CHAMBER
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Ambient Sound Synthesizer via Web Audio API -->
+  <script>
+    // Web Audio Engine for rich Gothic sound effects & Bollywood Thriller Scores
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+        this.bgmPlaying = false;
+        this.currentTrack = 0;
+        this.bgmNodes = [];
+        this.bgmTimer = null;
+        this.volume = 0.3;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playGong() {
+        if (!this.enabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(110, now);
+        osc.frequency.exponentialRampToValueAtTime(55, now + 3.0);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 3.5);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 3.6);
+      }
+      playMurderStinger() {
+        if (!this.enabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.linearRampToValueAtTime(140, now + 1.2);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 1.4);
+      }
+      playVoteTick() {
+        if (!this.enabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      }
+      playVictory() {
+        if (!this.enabled) return;
+        this.init();
+        const notes = [220, 277.18, 329.63, 440];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const now = this.ctx.currentTime + (idx * 0.18);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 1.3);
+        });
+      }
+
+      // ==========================================
+      // BOLLYWOOD THRILLER SYNTHESIZED BGM TRACKS
+      // ==========================================
+      stopBGM() {
+        if (this.bgmTimer) {
+          clearInterval(this.bgmTimer);
+          this.bgmTimer = null;
+        }
+        this.bgmNodes.forEach(node => {
+          try {
+            if (node.stop) node.stop();
+            if (node.disconnect) node.disconnect();
+          } catch (e) {}
+        });
+        this.bgmNodes = [];
+        this.bgmPlaying = false;
+        document.getElementById('bgmPlayIcon').textContent = '▶';
+        document.getElementById('bgmPlayLabel').textContent = 'Play Music';
+      }
+
+      startBGM(trackIndex = null) {
+        if (!this.enabled) return;
+        this.init();
+        this.stopBGM();
+
+        if (trackIndex !== null) this.currentTrack = parseInt(trackIndex, 10);
+        this.bgmPlaying = true;
+        document.getElementById('bgmPlayIcon').textContent = '⏸';
+        document.getElementById('bgmPlayLabel').textContent = 'Pause Music';
+
+        const mainGain = this.ctx.createGain();
+        mainGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+        mainGain.connect(this.ctx.destination);
+        this.bgmNodes.push(mainGain);
+
+        if (this.currentTrack === 0) {
+          // Track 1: Raat Ka Sannata (Eerie Tanpura & Sub Drone - Raag Todi/Bhairav feel)
+          const baseFreqs = [55, 110, 164.81]; // Sa - Pa
+          baseFreqs.forEach((f, i) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = i === 0 ? 'sine' : 'triangle';
+            osc.frequency.setValueAtTime(f, this.ctx.currentTime);
+            g.gain.setValueAtTime(0.18 / (i + 1), this.ctx.currentTime);
+            osc.connect(g);
+            g.connect(mainGain);
+            osc.start();
+            this.bgmNodes.push(osc, g);
+          });
+          // Suspense chime loop
+          let step = 0;
+          const notes = [220, 233.08, 277.18, 311.13, 329.63]; // Chromatic suspense
+          this.bgmTimer = setInterval(() => {
+            if (!this.bgmPlaying) return;
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            const now = this.ctx.currentTime;
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(notes[step % notes.length], now);
+            g.gain.setValueAtTime(0.08, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+            osc.connect(g);
+            g.connect(mainGain);
+            osc.start(now);
+            osc.stop(now + 1.9);
+            step++;
+          }, 1600);
+
+        } else if (this.currentTrack === 1) {
+          // Track 2: Talaash (Suspense Tabla & Strings)
+          let beat = 0;
+          this.bgmTimer = setInterval(() => {
+            if (!this.bgmPlaying) return;
+            const now = this.ctx.currentTime;
+            // Simulated Dha/Ge tabla low resonance
+            const tabla = this.ctx.createOscillator();
+            const tGain = this.ctx.createGain();
+            tabla.type = 'sine';
+            tabla.frequency.setValueAtTime(beat % 2 === 0 ? 82.4 : 110, now);
+            tabla.frequency.exponentialRampToValueAtTime(65, now + 0.35);
+            tGain.gain.setValueAtTime(0.35, now);
+            tGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            tabla.connect(tGain);
+            tGain.connect(mainGain);
+            tabla.start(now);
+            tabla.stop(now + 0.45);
+
+            // Minor Strings Chord
+            if (beat % 4 === 0) {
+              const str = this.ctx.createOscillator();
+              const sGain = this.ctx.createGain();
+              str.type = 'sawtooth';
+              str.frequency.setValueAtTime(220, now);
+              sGain.gain.setValueAtTime(0.09, now);
+              sGain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+              str.connect(sGain);
+              sGain.connect(mainGain);
+              str.start(now);
+              str.stop(now + 1.5);
+            }
+            beat++;
+          }, 450);
+
+        } else if (this.currentTrack === 2) {
+          // Track 3: Dhokha (Dramatic Chase & Tension Pulsing)
+          let tick = 0;
+          const bassNotes = [110, 110, 116.54, 110, 123.47, 110, 130.81, 123.47];
+          this.bgmTimer = setInterval(() => {
+            if (!this.bgmPlaying) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(bassNotes[tick % bassNotes.length], now);
+            g.gain.setValueAtTime(0.25, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+            osc.connect(g);
+            g.connect(mainGain);
+            osc.start(now);
+            osc.stop(now + 0.25);
+            tick++;
+          }, 240);
+
+        } else if (this.currentTrack === 3) {
+          // Track 4: Round Table Climax (High Stakes Brass & Heartbeat)
+          let count = 0;
+          this.bgmTimer = setInterval(() => {
+            if (!this.bgmPlaying) return;
+            const now = this.ctx.currentTime;
+            // Heartbeat dual thud
+            const hb = this.ctx.createOscillator();
+            const hbg = this.ctx.createGain();
+            hb.type = 'triangle';
+            hb.frequency.setValueAtTime(50, now);
+            hb.frequency.exponentialRampToValueAtTime(35, now + 0.15);
+            hbg.gain.setValueAtTime(0.35, now);
+            hbg.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+            hb.connect(hbg);
+            hbg.connect(mainGain);
+            hb.start(now);
+            hb.stop(now + 0.2);
+
+            // Stabs
+            if (count % 4 === 0) {
+              const brass = this.ctx.createOscillator();
+              const bg = this.ctx.createGain();
+              brass.type = 'sawtooth';
+              brass.frequency.setValueAtTime(293.66, now); // D minor dramatic stab
+              bg.gain.setValueAtTime(0.18, now);
+              bg.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+              brass.connect(bg);
+              bg.connect(mainGain);
+              brass.start(now);
+              brass.stop(now + 1.0);
+            }
+            count++;
+          }, 500);
+        }
+      }
+    }
+    const audio = new SoundEngine();
+
+    // Setup BGM Controls
+    document.getElementById('btnToggleBGM').onclick = () => {
+      if (audio.bgmPlaying) {
+        audio.stopBGM();
+      } else {
+        const select = document.getElementById('bgmSelector');
+        audio.startBGM(select.value);
+      }
+    };
+    document.getElementById('bgmSelector').onchange = (e) => {
+      audio.currentTrack = parseInt(e.target.value, 10);
+      if (audio.bgmPlaying) {
+        audio.startBGM(audio.currentTrack);
+      }
+    };
+    document.getElementById('bgmVolume').oninput = (e) => {
+      audio.volume = parseFloat(e.target.value);
+      if (audio.bgmNodes[0] && audio.bgmNodes[0].gain) {
+        audio.bgmNodes[0].gain.setValueAtTime(audio.volume, audio.ctx.currentTime);
+      }
+    };
+  </script>
+
+  <!-- P2P Synchronized WebRTC / Channel or Local / Broadcast Engine -->
+  <script>
+    // ==========================================
+    // MULTIPLAYER STATE SYNCHRONIZATION CORE
+    // ==========================================
+    // Uses BroadcastChannel + Web Storage Sync for cross-tab multi-session play,
+    // with automatic room segregation and host-authoritative game progression.
+
+    const PHASE = {
+      LOBBY: 'LOBBY',
+      ROLE_REVEAL: 'ROLE_REVEAL',
+      NIGHT: 'NIGHT',              // Traitor murders
+      BREAKFAST: 'BREAKFAST',      // Morning announcement
+      ROUND_TABLE: 'ROUND_TABLE',  // Debate & Banishment voting
+      BANISHMENT: 'BANISHMENT',    // Result of vote & role reveal
+      GAME_OVER: 'GAME_OVER'       // Win resolution
+    };
+
+    let localPlayer = {
+      id: 'p_' + Math.random().toString(36).substring(2, 9),
+      name: '',
+      role: null, // 'TRAITOR' or 'FAITHFUL'
+      isAlive: true,
+      hasVoted: false,
+      voteTargetId: null,
+      confirmedRole: false
+    };
+
+    let gameState = {
+      roomCode: null,
+      hostId: null,
+      phase: PHASE.LOBBY,
+      round: 1,
+      prizePot: 25000,
+      players: [],        // [{ id, name, role, isAlive, isHost, voteTargetId, isBot }]
+      lastMurderedId: null,
+      lastBanishedId: null,
+      chatMessages: [],   // [{ sender, text, timestamp, isSystem }]
+      votes: {},          // { voterId: targetId }
+      winner: null        // 'TRAITORS' or 'FAITHFUL'
+    };
+
+    let channel = null;
+
+    // AI Bot Names Pool
+    const BOT_NAMES = [
+      'Vikram (Bot)', 
+      'Inspector Roy (Bot)', 
+      'Ananya (Bot)', 
+      'Kabir (Bot)', 
+      'Simran (Bot)'
+    ];
+
+    // Bollywood Suspense Dialogue Pool for AI Bots
+    const BOT_DIALOGUES = [
+      "Mera shaq seedha us par hai jo sabse zyada chup baitha hai...",
+      "Raat ko corridor se aahat aa rahi thi. Koi na koi jhooth bol raha hai!",
+      "Main bilkul Faithful hoon! Galat insaan ko nikaloge toh game haar jayenge.",
+      "Karan Johar style betrayal chal raha hai yahan. Trust no one!",
+      "Agar main Traitor hota toh pehle hi move kar chuka hota. Look at the voting pattern!",
+      "Dost dost na raha... Jo sabse shareef ban raha hai, wahi asli qaatil hai!"
+    ];
+
+    // Helper: Modal Message Box (avoiding forbidden window.alert())
+    function showModal(title, message, icon = '⚔️') {
+      const modal = document.getElementById('modalOverlay');
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalMessage').textContent = message;
+      document.getElementById('modalIcon').textContent = icon;
+      modal.classList.remove('hidden');
+    }
+    document.getElementById('modalCloseBtn').onclick = () => {
+      document.getElementById('modalOverlay').classList.add('hidden');
+    };
+
+    // Auto-bot fill helper when starting with < 5 players
+    function autoFillBotsUpToFive() {
+      let botIndex = 0;
+      while (gameState.players.length < 5) {
+        const botName = BOT_NAMES[botIndex % BOT_NAMES.length];
+        const botId = 'bot_' + Math.random().toString(36).substring(2, 8);
+        gameState.players.push({
+          id: botId,
+          name: botName,
+          role: null,
+          isAlive: true,
+          isHost: false,
+          isBot: true,
+          hasConfirmed: true,
+          voteTargetId: null
+        });
+        botIndex++;
+      }
+    }
+
+    // Trigger Smart Bot Discussions
+    function triggerBotDiscussions() {
+      if (!isHost()) return;
+      const livingBots = gameState.players.filter(p => p.isBot && p.isAlive);
+      if (livingBots.length === 0) return;
+
+      const randomBot = livingBots[Math.floor(Math.random() * livingBots.length)];
+      const line = BOT_DIALOGUES[Math.floor(Math.random() * BOT_DIALOGUES.length)];
+      setTimeout(() => {
+        if (gameState.phase === PHASE.ROUND_TABLE || gameState.phase === PHASE.BREAKFAST) {
+          handlePlayerAction('CHAT_MSG', randomBot.id, {
+            sender: randomBot.name,
+            text: line
+          });
+        }
+      }, 2000 + Math.random() * 3000);
+    }
+    document.getElementById('modalCloseBtn').onclick = () => {
+      document.getElementById('modalOverlay').classList.add('hidden');
+    };
+
+    // Initialize Network Sync Channel
+    function initNetworkChannel(roomCode) {
+      if (channel) channel.close();
+      channel = new BroadcastChannel(`traitors_room_${roomCode}`);
+      
+      channel.onmessage = (event) => {
+        const { type, payload } = event.data;
+        handleIncomingMessage(type, payload);
+      };
+
+      // Periodic check from localStorage for backup sync
+      window.addEventListener('storage', (e) => {
+        if (e.key === `traitors_state_${gameState.roomCode}` && e.newValue) {
+          try {
+            const newState = JSON.parse(e.newValue);
+            applyRemoteState(newState);
+          } catch (err) {}
+        }
+      });
+    }
+
+    function broadcastState(actionDescription = '') {
+      if (!gameState.roomCode) return;
+      // Persist in storage for tabs that join late or refresh
+      try {
+        localStorage.setItem(`traitors_state_${gameState.roomCode}`, JSON.stringify(gameState));
+      } catch (e) {}
+
+      if (channel) {
+        channel.postMessage({
+          type: 'SYNC_STATE',
+          payload: { gameState, actionDescription }
+        });
+      }
+      render();
+    }
+
+    function sendPlayerAction(type, data) {
+      if (channel) {
+        channel.postMessage({
+          type: 'PLAYER_ACTION',
+          payload: { actionType: type, playerId: localPlayer.id, data }
+        });
+      }
+      // If we are host, process directly
+      if (isHost()) {
+        handlePlayerAction(type, localPlayer.id, data);
+      }
+    }
+
+    function isHost() {
+      return gameState.hostId === localPlayer.id;
+    }
+
+    function handleIncomingMessage(type, payload) {
+      if (type === 'SYNC_STATE') {
+        applyRemoteState(payload.gameState);
+      } else if (type === 'PLAYER_ACTION' && isHost()) {
+        handlePlayerAction(payload.actionType, payload.playerId, payload.data);
+      }
+    }
+
+    function applyRemoteState(incomingState) {
+      // Retain our personal identity role details if known
+      const meInGame = incomingState.players.find(p => p.id === localPlayer.id);
+      if (meInGame) {
+        localPlayer.isAlive = meInGame.isAlive;
+        if (meInGame.role) {
+          localPlayer.role = meInGame.role;
+        }
+      }
+      gameState = incomingState;
+      render();
+    }
+
+    // ==========================================
+    // HOST GAME MASTER LOGIC
+    // ==========================================
+    function handlePlayerAction(actionType, playerId, data) {
+      if (!isHost()) return;
+
+      if (actionType === 'JOIN') {
+        const existing = gameState.players.find(p => p.id === playerId);
+        if (!existing) {
+          gameState.players.push({
+            id: playerId,
+            name: data.name,
+            role: null,
+            isAlive: true,
+            isHost: playerId === gameState.hostId,
+            voteTargetId: null
+          });
+          addWhisper(`🏰 ${data.name} entered the castle chambers.`, true);
+        }
+        broadcastState('Player joined');
+      }
+
+      else if (actionType === 'CONFIRM_ROLE') {
+        // If all players confirmed, host advances to Night 1
+        const player = gameState.players.find(p => p.id === playerId);
+        if (player) player.hasConfirmed = true;
+
+        const allConfirmed = gameState.players.every(p => p.hasConfirmed);
+        if (allConfirmed && gameState.phase === PHASE.ROLE_REVEAL) {
+          gameState.phase = PHASE.NIGHT;
+          addWhisper(`🌙 Midnight strikes over the towers. The Traitor stalks in the dark...`, true);
+          audio.playGong();
+          broadcastState('Night started');
+        }
+      }
+
+      else if (actionType === 'TRAITOR_MURDER') {
+        if (gameState.phase !== PHASE.NIGHT) return;
+        const targetId = data.targetId;
+        const victim = gameState.players.find(p => p.id === targetId);
+        if (victim && victim.isAlive) {
+          victim.isAlive = false;
+          gameState.lastMurderedId = targetId;
+          gameState.phase = PHASE.BREAKFAST;
+          addWhisper(`☀️ Morning arrives at the Scottish estate. The castle gathers for breakfast.`, true);
+          audio.playMurderStinger();
+          broadcastState('Dawn broken');
+        }
+      }
+
+      else if (actionType === 'PROCEED_ROUND_TABLE') {
+        if (gameState.phase === PHASE.BREAKFAST) {
+          gameState.phase = PHASE.ROUND_TABLE;
+          gameState.votes = {};
+          gameState.players.forEach(p => p.voteTargetId = null);
+          addWhisper(`⚔️ The Round Table convenes. Banishment votes are required.`, true);
+          audio.playGong();
+          broadcastState('Round table begun');
+          triggerBotDiscussions();
+        }
+      }
+
+      else if (actionType === 'CAST_VOTE') {
+        if (gameState.phase !== PHASE.ROUND_TABLE) return;
+        const voter = gameState.players.find(p => p.id === playerId);
+        if (voter && voter.isAlive) {
+          gameState.votes[playerId] = data.targetId;
+          voter.voteTargetId = data.targetId;
+          audio.playVoteTick();
+
+          // Check if all living players have voted
+          const livingPlayers = gameState.players.filter(p => p.isAlive);
+          const allVoted = livingPlayers.every(p => gameState.votes[p.id] !== undefined);
+
+          if (allVoted) {
+            tallyVotesAndBanish();
+          } else {
+            broadcastState('Vote cast');
+          }
+        }
+      }
+
+      else if (actionType === 'CHAT_MSG') {
+        gameState.chatMessages.push({
+          sender: data.sender,
+          text: data.text,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isSystem: false
+        });
+        if (gameState.chatMessages.length > 40) gameState.chatMessages.shift();
+        broadcastState('Chat message');
+      }
+
+      else if (actionType === 'NEXT_ROUND') {
+        checkWinConditionOrAdvance();
+      }
+
+      else if (actionType === 'RESET_LOBBY') {
+        resetGameToLobby();
+      }
+    }
+
+    function tallyVotesAndBanish() {
+      // Calculate highest votes
+      const voteCounts = {};
+      Object.values(gameState.votes).forEach(targetId => {
+        voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
+      });
+
+      let highestVotes = 0;
+      let banishedId = null;
+      let tie = false;
+
+      for (const [targetId, count] of Object.entries(voteCounts)) {
+        if (count > highestVotes) {
+          highestVotes = count;
+          banishedId = targetId;
+          tie = false;
+        } else if (count === highestVotes) {
+          tie = true;
+        }
+      }
+
+      // If tie, pick either randomly or the first highest for decisive resolution
+      if (tie) {
+        const topCandidates = Object.keys(voteCounts).filter(id => voteCounts[id] === highestVotes);
+        banishedId = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+      }
+
+      const banishedPlayer = gameState.players.find(p => p.id === banishedId);
+      if (banishedPlayer) {
+        banishedPlayer.isAlive = false;
+        gameState.lastBanishedId = banishedId;
+      }
+
+      gameState.phase = PHASE.BANISHMENT;
+      addWhisper(`⚖️ By vote of the Round Table, ${banishedPlayer ? banishedPlayer.name : 'a player'} is banished!`, true);
+      audio.playGong();
+      broadcastState('Player banished');
+    }
+
+    function checkWinConditionOrAdvance() {
+      const living = gameState.players.filter(p => p.isAlive);
+      const livingTraitor = living.find(p => p.role === 'TRAITOR');
+
+      // Win Condition 1: Faithful win if Traitor is banished
+      if (!livingTraitor) {
+        gameState.phase = PHASE.GAME_OVER;
+        gameState.winner = 'FAITHFUL';
+        addWhisper(`🏆 FAITHFUL VICTORY! The Traitor has been extinguished!`, true);
+        audio.playVictory();
+        broadcastState('Game over faithful');
+        return;
+      }
+
+      // Win Condition 2: Traitor wins if living players <= 2 (Traitors achieve parity/unstoppable hold)
+      if (living.length <= 2) {
+        gameState.phase = PHASE.GAME_OVER;
+        gameState.winner = 'TRAITORS';
+        addWhisper(`🩸 TRAITOR VICTORY! The Traitor has outwitted the castle and taken the entire prize!`, true);
+        audio.playVictory();
+        broadcastState('Game over traitor');
+        return;
+      }
+
+      // Otherwise: Advance to next round (Night)
+      gameState.round += 1;
+      gameState.prizePot += 10000; // Prize pot accumulates each day
+      gameState.phase = PHASE.NIGHT;
+      gameState.votes = {};
+      gameState.players.forEach(p => p.voteTargetId = null);
+      addWhisper(`🌙 Round ${gameState.round}: Darkness engulfs the estate once again.`, true);
+      audio.playGong();
+      broadcastState('Next round night');
+    }
+
+    function resetGameToLobby() {
+      gameState.phase = PHASE.LOBBY;
+      gameState.round = 1;
+      gameState.prizePot = 25000;
+      gameState.lastMurderedId = null;
+      gameState.lastBanishedId = null;
+      gameState.votes = {};
+      gameState.winner = null;
+      gameState.players.forEach(p => {
+        p.isAlive = true;
+        p.role = null;
+        p.hasConfirmed = false;
+        p.voteTargetId = null;
+      });
+      localPlayer.role = null;
+      localPlayer.isAlive = true;
+      localPlayer.confirmedRole = false;
+      addWhisper(`🔄 The castle courtyard resets. Prepare for a new game.`, true);
+      broadcastState('Lobby reset');
+    }
+
+    function addWhisper(text, isSystem = false) {
+      gameState.chatMessages.push({
+        sender: 'Herald',
+        text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isSystem
+      });
+    }
+
+    // ==========================================
+    // UI RENDERING & DOM LOGIC
+    // ==========================================
+    function render() {
+      // View switches
+      const viewLanding = document.getElementById('viewLanding');
+      const viewLobby = document.getElementById('viewLobby');
+      const viewRoleReveal = document.getElementById('viewRoleReveal');
+      const viewGameArena = document.getElementById('viewGameArena');
+      const viewGameEnd = document.getElementById('viewGameEnd');
+      const roomBadge = document.getElementById('roomBadge');
+
+      [viewLanding, viewLobby, viewRoleReveal, viewGameArena, viewGameEnd].forEach(v => v.classList.add('hidden'));
+
+      if (!gameState.roomCode) {
+        viewLanding.classList.remove('hidden');
+        roomBadge.classList.add('hidden');
+        return;
+      }
+
+      roomBadge.classList.remove('hidden');
+      document.getElementById('displayRoomCode').textContent = gameState.roomCode;
+      document.getElementById('lobbyRoomCode').textContent = gameState.roomCode;
+
+      // Update Top Status Bar
+      document.getElementById('roundNumber').textContent = gameState.round;
+      document.getElementById('prizePotAmount').textContent = gameState.prizePot.toLocaleString();
+
+      const me = gameState.players.find(p => p.id === localPlayer.id);
+      if (me) {
+        localPlayer.role = me.role || localPlayer.role;
+        localPlayer.isAlive = me.isAlive;
+      }
+
+      const myLoyaltyTag = document.getElementById('myLoyaltyTag');
+      if (localPlayer.role === 'TRAITOR') {
+        myLoyaltyTag.textContent = '🩸 TRAITOR';
+        myLoyaltyTag.className = 'text-xs font-cinzel font-bold px-2.5 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-700/60 shadow';
+      } else if (localPlayer.role === 'FAITHFUL') {
+        myLoyaltyTag.textContent = '🛡️ FAITHFUL';
+        myLoyaltyTag.className = 'text-xs font-cinzel font-bold px-2.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-600/60 shadow';
+      } else {
+        myLoyaltyTag.textContent = 'SEALED';
+        myLoyaltyTag.className = 'text-xs font-cinzel font-bold px-2.5 py-0.5 rounded bg-slate-800 text-slate-400';
+      }
+
+      // Phase-specific screens
+      if (gameState.phase === PHASE.LOBBY) {
+        viewLobby.classList.remove('hidden');
+        renderLobby();
+      } else if (gameState.phase === PHASE.ROLE_REVEAL && !localPlayer.confirmedRole) {
+        viewRoleReveal.classList.remove('hidden');
+        renderRoleCard();
+      } else if (gameState.phase === PHASE.GAME_OVER) {
+        viewGameEnd.classList.remove('hidden');
+        renderGameOver();
+      } else {
+        viewGameArena.classList.remove('hidden');
+        renderGameArena();
+      }
+
+      renderRoster();
+      renderChat();
+    }
+
+    function renderLobby() {
+      const list = document.getElementById('lobbyPlayerList');
+      list.innerHTML = '';
+      document.getElementById('playerCount').textContent = gameState.players.length;
+
+      // Create 5 slots
+      for (let i = 0; i < 5; i++) {
+        const p = gameState.players[i];
+        const card = document.createElement('div');
+        if (p) {
+          card.className = `p-3 rounded-xl border flex items-center justify-between ${
+            p.id === localPlayer.id 
+              ? 'bg-amber-950/30 border-amber-500/60 shadow-lg' 
+              : 'bg-castle-900 border-slate-800'
+          }`;
+          card.innerHTML = `
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-full ${p.isHost ? 'bg-amber-600/30 border border-amber-500' : 'bg-slate-800'} flex items-center justify-center font-cinzel text-xs font-bold text-amber-300">
+                ${p.isHost ? '👑' : (i + 1)}
+              </div>
+              <div>
+                <p class="font-cinzel text-sm font-semibold text-white flex items-center gap-1.5">
+                  ${escapeHtml(p.name)}
+                  ${p.id === localPlayer.id ? '<span class="text-[10px] text-amber-400 font-sans font-normal">(You)</span>' : ''}
+                </p>
+                <p class="text-[10px] text-slate-400">${p.isHost ? 'Castle Host' : 'Honored Guest'}</p>
+              </div>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">Ready</span>
+          `;
+        } else {
+          card.className = 'p-3 rounded-xl border border-dashed border-slate-800/80 bg-castle-950/40 flex items-center justify-center text-slate-600 text-xs font-cinzel';
+          card.innerHTML = `<span>+ Seat ${i + 1} Awaiting Guest</span>`;
+        }
+        list.appendChild(card);
+      }
+
+      // Add dummy bot/local player button to facilitate easy testing if player is alone
+      const existingBot = gameState.players.length;
+      const startBtn = document.getElementById('btnStartGame');
+      const statusHint = document.getElementById('lobbyStatusHint');
+
+      if (isHost()) {
+        startBtn.disabled = gameState.players.length < 3; // allow 3 to 5 players (optimized for 5)
+        if (gameState.players.length < 5) {
+          statusHint.innerHTML = `
+            ${gameState.players.length}/5 Players. 
+            <button id="btnAddBotBtn" class="ml-2 text-amber-400 underline hover:text-amber-300 font-bold">
+              + Fill slot with Guest (Simulated)
+            </button>
+          `;
+          setTimeout(() => {
+            const botBtn = document.getElementById('btnAddBotBtn');
+            if (botBtn) {
+              botBtn.onclick = () => {
+                const names = ['Lord Percival', 'Lady Marion', 'Baron Thorne', 'Countess Vane', 'Duchess Elena'];
+                const used = gameState.players.map(p => p.name);
+                const pick = names.find(n => !used.includes(n)) || `Guest ${gameState.players.length + 1}`;
+                handlePlayerAction('JOIN', 'bot_' + Math.random().toString(36).substring(2, 7), { name: pick });
+              };
+            }
+          }, 50);
+        } else {
+          statusHint.textContent = 'Castle chamber is full (5/5). Ready to begin.';
+        }
+      } else {
+        startBtn.classList.add('hidden');
+        statusHint.textContent = 'Waiting for Host to tap shoulders and distribute roles...';
+      }
+    }
+
+    function renderRoleCard() {
+      const card = document.getElementById('roleCard');
+      const badge = document.getElementById('roleBadgeDeco');
+      const title = document.getElementById('roleTitle');
+      const desc = document.getElementById('roleDescription');
+      const secretBox = document.getElementById('roleSecretBox');
+
+      if (localPlayer.role === 'TRAITOR') {
+        badge.className = 'w-20 h-20 mx-auto rounded-full flex items-center justify-center text-3xl font-cinzel font-black mb-4 bg-rose-950 text-rose-300 border-2 border-rose-600 shadow-rose-950/70 shadow-2xl';
+        badge.innerHTML = '🩸';
+        title.textContent = 'YOU ARE A TRAITOR';
+        title.className = 'text-3xl sm:text-4xl font-cinzel font-black tracking-wider my-2 text-rose-500';
+        desc.textContent = 'You have been secretly tapped. When the castle sleeps at night, you will murder Faithfuls one by one. Maintain your disguise at the Round Table.';
+        secretBox.innerHTML = `
+          <strong class="text-rose-400">Your Objective:</strong> Blend in, sow distrust among Faithfuls, and survive until parity (the final 2).
+        `;
+      } else {
+        badge.className = 'w-20 h-20 mx-auto rounded-full flex items-center justify-center text-3xl font-cinzel font-black mb-4 bg-amber-950 text-amber-300 border-2 border-amber-500 shadow-amber-950/70 shadow-2xl';
+        badge.innerHTML = '🛡️';
+        title.textContent = 'YOU ARE FAITHFUL';
+        title.className = 'text-3xl sm:text-4xl font-cinzel font-black tracking-wider my-2 text-amber-400';
+        desc.textContent = 'You are loyal to the castle. Beware: a Traitor breathes the same air and sits at your breakfast table. Observe their votes and behavioral slips.';
+        secretBox.innerHTML = `
+          <strong class="text-amber-400">Your Objective:</strong> Identify the Traitor and cast your banishment vote at the Round Table.
+        `;
+      }
+    }
+
+    function renderGameArena() {
+      const icon = document.getElementById('phaseIcon');
+      const tag = document.getElementById('currentPhaseTag');
+      const headline = document.getElementById('phaseHeadline');
+      const content = document.getElementById('phaseContent');
+      const actions = document.getElementById('phaseActionArea');
+
+      content.innerHTML = '';
+      actions.innerHTML = '';
+
+      const livingPlayers = gameState.players.filter(p => p.isAlive);
+      const isDead = !localPlayer.isAlive;
+
+      // SPECTATOR BANNER
+      if (isDead) {
+        const deadBanner = document.createElement('div');
+        deadBanner.className = 'p-3 bg-red-950/50 border border-red-800 rounded-xl text-center text-xs text-rose-300 mb-4';
+        deadBanner.innerHTML = '👻 <strong>You have been murdered/banished.</strong> You are now a castle specter observing the intrigue.';
+        content.appendChild(deadBanner);
+      }
+
+      // PHASE: NIGHT
+      if (gameState.phase === PHASE.NIGHT) {
+        icon.textContent = '🌙';
+        tag.textContent = 'THE CONCLAVE / MIDNIGHT';
+        headline.textContent = 'The Castle Sleeps in Shadow';
+
+        if (localPlayer.role === 'TRAITOR' && localPlayer.isAlive) {
+          content.innerHTML += `
+            <div class="text-center space-y-2 py-4">
+              <span class="text-rose-500 text-xs font-cinzel tracking-widest uppercase">Traitor's Conclave</span>
+              <h3 class="text-xl sm:text-2xl font-cinzel font-bold text-white">Choose Your Murder Victim</h3>
+              <p class="text-xs text-slate-300 max-w-md mx-auto">Select one Faithful player to eliminate before dawn arrives. Choose carefully to avoid suspicion.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4" id="murderTargetGrid"></div>
+          `;
+
+          const grid = content.querySelector('#murderTargetGrid');
+          const faithfulTargets = livingPlayers.filter(p => p.role !== 'TRAITOR');
+
+          faithfulTargets.forEach(target => {
+            const btn = document.createElement('button');
+            btn.className = 'p-3.5 rounded-xl border border-rose-900/60 bg-rose-950/30 hover:bg-rose-900/60 text-slate-200 text-left flex items-center justify-between transition group';
+            btn.innerHTML = `
+              <div class="flex items-center space-x-3">
+                <span class="text-lg">🗡️</span>
+                <span class="font-cinzel text-sm font-semibold group-hover:text-rose-200">${escapeHtml(target.name)}</span>
+              </div>
+              <span class="text-xs text-rose-400 opacity-0 group-hover:opacity-100 uppercase tracking-widest font-cinzel font-bold">Murder</span>
+            `;
+            btn.onclick = () => {
+              sendPlayerAction('TRAITOR_MURDER', { targetId: target.id });
+            };
+            grid.appendChild(btn);
+          });
+        } else {
+          // Faithful / Spectator Waiting View
+          content.innerHTML += `
+            <div class="text-center space-y-4 py-8">
+              <div class="w-16 h-16 mx-auto rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-3xl animate-pulse">
+                🕯️
+              </div>
+              <h3 class="text-xl font-cinzel font-bold text-slate-200">The Turret Conclave is Assembled</h3>
+              <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                Heavy footsteps echo along the cold stone corridors. The Traitor is currently cloaked in the dark turret, signing a death warrant in wax.
+              </p>
+              <div class="text-xs text-amber-500 font-cinzel tracking-widest animate-pulse">
+                Awaiting the morning church bells...
+              </div>
+            </div>
+          `;
+
+          // If Host is faithful or bot is traitor, allow host to trigger bot murder if bot is traitor
+          if (isHost()) {
+            const traitor = gameState.players.find(p => p.role === 'TRAITOR' && p.isAlive);
+            if (traitor && traitor.id.startsWith('bot_')) {
+              setTimeout(() => {
+                const faithfuls = livingPlayers.filter(p => p.role !== 'TRAITOR');
+                if (faithfuls.length > 0) {
+                  const victim = faithfuls[Math.floor(Math.random() * faithfuls.length)];
+                  handlePlayerAction('TRAITOR_MURDER', traitor.id, { targetId: victim.id });
+                }
+              }, 2500);
+            }
+          }
+        }
+      }
+
+      // PHASE: BREAKFAST
+      else if (gameState.phase === PHASE.BREAKFAST) {
+        icon.textContent = '☀️';
+        tag.textContent = 'BREAKFAST REVEAL';
+        headline.textContent = 'The Dining Hall Mourns';
+
+        const victim = gameState.players.find(p => p.id === gameState.lastMurderedId);
+
+        content.innerHTML += `
+          <div class="text-center space-y-4 py-6">
+            <div class="w-16 h-16 mx-auto rounded-full bg-rose-950 border border-rose-600 flex items-center justify-center text-3xl">
+              🩸
+            </div>
+            <span class="text-xs font-cinzel text-rose-400 uppercase tracking-widest">Murder in the Night</span>
+            <h3 class="text-2xl font-cinzel font-bold text-white">
+              ${victim ? escapeHtml(victim.name) : 'An unfortunate soul'} was murdered!
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
+              Their chair sits vacant at the breakfast table. The Traitor strikes from within our fellowship.
+            </p>
+          </div>
+        `;
+
+        if (isHost()) {
+          actions.innerHTML = `
+            <button id="btnProceedRoundTable" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 text-black font-cinzel font-bold tracking-widest text-sm hover:brightness-110 transition shadow-lg shadow-amber-950/40">
+              CONVENE THE ROUND TABLE (DEBATE & VOTE)
+            </button>
+          `;
+          setTimeout(() => {
+            const btn = document.getElementById('btnProceedRoundTable');
+            if (btn) {
+              btn.onclick = () => handlePlayerAction('PROCEED_ROUND_TABLE', localPlayer.id, {});
+            }
+          }, 50);
+        } else {
+          actions.innerHTML = `
+            <div class="text-center text-xs font-cinzel text-slate-400 italic">
+              Awaiting Host to summon the castle to the Round Table...
+            </div>
+          `;
+        }
+      }
+
+      // PHASE: ROUND TABLE (VOTING)
+      else if (gameState.phase === PHASE.ROUND_TABLE) {
+        icon.textContent = '⚔️';
+        tag.textContent = 'THE ROUND TABLE';
+        headline.textContent = 'Accusations & Banishment';
+
+        const myVote = gameState.votes[localPlayer.id];
+
+        content.innerHTML += `
+          <div class="text-center space-y-2 mb-4">
+            <h3 class="text-lg sm:text-xl font-cinzel font-bold text-white">Cast Your Open Slate</h3>
+            <p class="text-xs text-slate-300 max-w-md mx-auto">
+              Look across the table. Write down the name of who you believe is a Traitor. The player with the most votes will be banished immediately.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="banishTargetGrid"></div>
+        `;
+
+        const grid = content.querySelector('#banishTargetGrid');
+
+        livingPlayers.forEach(p => {
+          const isMe = p.id === localPlayer.id;
+          const isSelected = myVote === p.id;
+          const btn = document.createElement('button');
+          btn.disabled = isDead || isMe;
+          btn.className = `p-3 rounded-xl border text-left flex items-center justify-between transition ${
+            isSelected 
+              ? 'border-amber-400 bg-amber-950/60 ring-2 ring-amber-500/40' 
+              : 'border-slate-800 bg-castle-900 hover:border-slate-700'
+          } ${isMe ? 'opacity-50 cursor-not-allowed' : ''}`;
+          
+          btn.innerHTML = `
+            <div class="flex items-center space-x-3">
+              <span class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-cinzel font-bold text-amber-300">
+                ${escapeHtml(p.name[0])}
+              </span>
+              <div>
+                <p class="font-cinzel text-sm font-semibold text-white">${escapeHtml(p.name)} ${isMe ? '(You)' : ''}</p>
+                <p class="text-[10px] text-slate-400">Suspect</p>
+              </div>
+            </div>
+            <span class="text-xs font-cinzel font-bold ${isSelected ? 'text-amber-400' : 'text-slate-500'}">
+              ${isSelected ? 'VOTED' : 'VOTE'}
+            </span>
+          `;
+
+          btn.onclick = () => {
+            if (!isDead && !isMe) {
+              sendPlayerAction('CAST_VOTE', { targetId: p.id });
+            }
+          };
+          grid.appendChild(btn);
+        });
+
+        // Host helper to simulate bot votes if present
+        if (isHost()) {
+          const bots = livingPlayers.filter(p => p.id.startsWith('bot_') && !gameState.votes[p.id]);
+          if (bots.length > 0) {
+            setTimeout(() => {
+              bots.forEach(b => {
+                const candidates = livingPlayers.filter(p => p.id !== b.id);
+                const pick = candidates[Math.floor(Math.random() * candidates.length)];
+                handlePlayerAction('CAST_VOTE', b.id, { targetId: pick.id });
+              });
+            }, 1800);
+          }
+        }
+      }
+
+      // PHASE: BANISHMENT (REVEAL)
+      else if (gameState.phase === PHASE.BANISHMENT) {
+        icon.textContent = '⚖️';
+        tag.textContent = 'BANISHMENT VERDICT';
+        headline.textContent = 'The Slate is Read';
+
+        const banished = gameState.players.find(p => p.id === gameState.lastBanishedId);
+        const wasTraitor = banished && banished.role === 'TRAITOR';
+
+        content.innerHTML += `
+          <div class="text-center space-y-4 py-4">
+            <div class="w-16 h-16 mx-auto rounded-full ${wasTraitor ? 'bg-emerald-950 border-emerald-500 text-emerald-300' : 'bg-rose-950 border-rose-500 text-rose-300'} border flex items-center justify-center text-3xl">
+              ${wasTraitor ? '⚔️' : '💔'}
+            </div>
+            <span class="text-xs font-cinzel uppercase tracking-widest text-slate-400">Courtyard Execution</span>
+            <h3 class="text-2xl font-cinzel font-bold text-white">
+              ${banished ? escapeHtml(banished.name) : 'The suspect'} has been Banished!
+            </h3>
+            <div class="p-4 rounded-xl max-w-sm mx-auto border ${wasTraitor ? 'bg-emerald-950/30 border-emerald-800 text-emerald-300' : 'bg-rose-950/30 border-rose-800 text-rose-300'} text-sm font-cinzel font-bold tracking-wider">
+              "I am... ${wasTraitor ? 'A TRAITOR! 🩸' : 'A FAITHFUL. 🛡️'}"
+            </div>
+            <p class="text-xs text-slate-400 max-w-md mx-auto">
+              ${wasTraitor ? 'The castle has eliminated a Traitor! Can the Faithful claim total victory?' : 'A devastating mistake! The Faithful have cast out one of their own.'}
+            </p>
+          </div>
+        `;
+
+        if (isHost()) {
+          actions.innerHTML = `
+            <button id="btnCheckWinOrNext" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-800 to-rose-900 text-white font-cinzel font-bold tracking-widest text-sm hover:brightness-110 transition shadow-lg">
+              VERIFY FAITHFUL DESTINY (NEXT STEP)
+            </button>
+          `;
+          setTimeout(() => {
+            const btn = document.getElementById('btnCheckWinOrNext');
+            if (btn) {
+              btn.onclick = () => handlePlayerAction('NEXT_ROUND', localPlayer.id, {});
+            }
+          }, 50);
+        } else {
+          actions.innerHTML = `
+            <div class="text-center text-xs font-cinzel text-slate-400 italic">
+              Awaiting Host to check victory conditions or advance the night...
+            </div>
+          `;
+        }
+      }
+    }
+
+    function renderGameOver() {
+      const isFaithfulWin = gameState.winner === 'FAITHFUL';
+      const icon = document.getElementById('endVictoryIcon');
+      const title = document.getElementById('endVictoryTitle');
+      const sub = document.getElementById('endVictorySubtitle');
+      const roster = document.getElementById('endRosterList');
+
+      roster.innerHTML = '';
+
+      if (isFaithfulWin) {
+        icon.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl mb-4 bg-amber-950 text-amber-300 border-2 border-amber-500 shadow-xl';
+        icon.innerHTML = '🛡️';
+        title.textContent = 'THE FAITHFUL WIN';
+        title.className = 'text-3xl sm:text-4xl font-cinzel font-black tracking-wider my-2 text-amber-400';
+        sub.textContent = `The Traitors were successfully uncovered and banished. The remaining Faithful split the £${gameState.prizePot.toLocaleString()} prize!`;
+      } else {
+        icon.className = 'w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl mb-4 bg-rose-950 text-rose-300 border-2 border-rose-600 shadow-xl';
+        icon.innerHTML = '🩸';
+        title.textContent = 'THE TRAITOR WINS';
+        title.className = 'text-3xl sm:text-4xl font-cinzel font-black tracking-wider my-2 text-rose-500';
+        sub.textContent = `The Traitor successfully infiltrated until the very end and steals the entire £${gameState.prizePot.toLocaleString()} pot!`;
+      }
+
+      gameState.players.forEach(p => {
+        const item = document.createElement('div');
+        const isTraitor = p.role === 'TRAITOR';
+        item.className = `p-2.5 rounded-xl border flex items-center justify-between text-xs ${
+          isTraitor ? 'bg-rose-950/40 border-rose-800 text-rose-200' : 'bg-castle-900 border-slate-800 text-slate-300'
+        }`;
+        item.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span>${p.isAlive ? '✨' : '💀'}</span>
+            <span class="font-cinzel font-bold">${escapeHtml(p.name)}</span>
+          </div>
+          <span class="font-cinzel font-bold px-2 py-0.5 rounded ${isTraitor ? 'bg-rose-900 text-rose-100' : 'bg-amber-950 text-amber-300'}">
+            ${isTraitor ? 'TRAITOR' : 'FAITHFUL'}
+          </span>
+        `;
+        roster.appendChild(item);
+      });
+
+      const playAgainBtn = document.getElementById('btnPlayAgain');
+      if (isHost()) {
+        playAgainBtn.classList.remove('hidden');
+        playAgainBtn.onclick = () => {
+          handlePlayerAction('RESET_LOBBY', localPlayer.id, {});
+        };
+      } else {
+        playAgainBtn.classList.add('hidden');
+      }
+    }
+
+    function renderRoster() {
+      const roster = document.getElementById('playerRoster');
+      const livingCount = document.getElementById('livingCount');
+      if (!roster) return;
+      roster.innerHTML = '';
+
+      const living = gameState.players.filter(p => p.isAlive);
+      livingCount.textContent = living.length;
+
+      gameState.players.forEach(p => {
+        const item = document.createElement('div');
+        const isMe = p.id === localPlayer.id;
+        const votedTarget = gameState.votes[p.id];
+        const targetPlayer = votedTarget ? gameState.players.find(x => x.id === votedTarget) : null;
+
+        item.className = `p-2.5 rounded-xl border flex items-center justify-between text-xs transition ${
+          p.isAlive 
+            ? 'bg-castle-950/90 border-slate-800' 
+            : 'bg-red-950/20 border-red-950/40 opacity-40 line-through'
+        }`;
+
+        item.innerHTML = `
+          <div class="flex items-center space-x-2.5">
+            <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${p.isAlive ? 'bg-slate-800 text-amber-300' : 'bg-red-950 text-red-400'}">
+              ${p.isAlive ? '👤' : '†'}
+            </span>
+            <span class="font-cinzel font-medium text-slate-200">
+              ${escapeHtml(p.name)} ${isMe ? '<span class="text-amber-500 font-sans text-[10px]">(You)</span>' : ''}
+            </span>
+          </div>
+          <div class="text-[10px] font-cinzel">
+            ${
+              !p.isAlive 
+                ? '<span class="text-rose-400">Eliminated</span>' 
+                : (gameState.phase === PHASE.ROUND_TABLE && targetPlayer 
+                    ? `<span class="text-amber-400">Voted ${escapeHtml(targetPlayer.name)}</span>` 
+                    : '<span class="text-emerald-400">Active</span>')
+            }
+          </div>
+        `;
+        roster.appendChild(item);
+      });
+    }
+
+    function renderChat() {
+      const container = document.getElementById('chatHistory');
+      if (!container) return;
+      container.innerHTML = '';
+
+      gameState.chatMessages.forEach(msg => {
+        const div = document.createElement('div');
+        if (msg.isSystem) {
+          div.className = 'text-[11px] font-cinzel text-amber-400/90 italic bg-amber-950/20 p-1.5 rounded border-l-2 border-amber-600';
+          div.textContent = msg.text;
+        } else {
+          div.className = 'text-[11px] text-slate-300';
+          div.innerHTML = `
+            <span class="text-[10px] text-slate-500 font-mono">[${msg.timestamp}]</span>
+            <strong class="text-amber-300 font-cinzel">${escapeHtml(msg.sender)}:</strong>
+            <span>${escapeHtml(msg.text)}</span>
+          `;
+        }
+        container.appendChild(div);
+      });
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[m]);
+    }
+
+    // ==========================================
+    // USER INTERACTION EVENT LISTENERS
+    // ==========================================
+    // Tab switching for Host vs Join
+    document.getElementById('tabCreateBtn').onclick = () => {
+      document.getElementById('paneHost').classList.remove('hidden');
+      document.getElementById('paneJoin').classList.add('hidden');
+      document.getElementById('tabCreateBtn').className = 'py-2 text-xs font-cinzel tracking-wider rounded-lg border border-amber-600/60 bg-amber-950/40 text-amber-200';
+      document.getElementById('tabJoinBtn').className = 'py-2 text-xs font-cinzel tracking-wider rounded-lg border border-slate-800 bg-castle-800/40 text-slate-400';
+    };
+
+    document.getElementById('tabJoinBtn').onclick = () => {
+      document.getElementById('paneHost').classList.add('hidden');
+      document.getElementById('paneJoin').classList.remove('hidden');
+      document.getElementById('tabJoinBtn').className = 'py-2 text-xs font-cinzel tracking-wider rounded-lg border border-amber-600/60 bg-amber-950/40 text-amber-200';
+      document.getElementById('tabCreateBtn').className = 'py-2 text-xs font-cinzel tracking-wider rounded-lg border border-slate-800 bg-castle-800/40 text-slate-400';
+    };
+
+    // Audio Toggle
+    document.getElementById('soundToggleBtn').onclick = () => {
+      audio.enabled = !audio.enabled;
+      document.getElementById('soundIcon').textContent = audio.enabled ? '🔊' : '🔇';
+    };
+
+    // Create Room
+    document.getElementById('btnCreateRoom').onclick = () => {
+      const nameInput = document.getElementById('inputPlayerName').value.trim();
+      if (!nameInput) {
+        showModal('Identity Required', 'Please declare your alias before entering the castle chambers.');
+        return;
+      }
+      localPlayer.name = nameInput;
+      const code = Math.random().toString(36).substring(2, 7).toUpperCase();
+      
+      gameState.roomCode = code;
+      gameState.hostId = localPlayer.id;
+      gameState.players = [{
+        id: localPlayer.id,
+        name: localPlayer.name,
+        role: null,
+        isAlive: true,
+        isHost: true,
+        voteTargetId: null
+      }];
+
+      initNetworkChannel(code);
+      audio.playGong();
+      broadcastState('Room created');
+    };
+
+    // Join Room
+    document.getElementById('btnJoinRoom').onclick = () => {
+      const nameInput = document.getElementById('inputPlayerName').value.trim();
+      const codeInput = document.getElementById('inputRoomCode').value.trim().toUpperCase();
+
+      if (!nameInput) {
+        showModal('Identity Required', 'Please declare your alias before entering.');
+        return;
+      }
+      if (!codeInput || codeInput.length < 4) {
+        showModal('Invalid Chamber Code', 'Enter a valid room code to locate the gathering.');
+        return;
+      }
+
+      localPlayer.name = nameInput;
+      gameState.roomCode = codeInput;
+    // Host Starts Game: Taps Shoulders (Assigns 1 Traitor & 4 Faithfuls, Auto-fills bots)
+    document.getElementById('btnStartGame').onclick = () => {
+      if (!isHost()) return;
+
+      // Automatically fill bots to make 5 players total if slots are missing
+      if (gameState.players.length < 5) {
+        autoFillBotsUpToFive();
+      }
+
+      // Pick exactly 1 Traitor at random
+      const traitorIdx = Math.floor(Math.random() * gameState.players.length);
+      gameState.players.forEach((p, idx) => {
+        p.role = idx === traitorIdx ? 'TRAITOR' : 'FAITHFUL';
+        p.hasConfirmed = p.isBot ? true : false;
+        p.isAlive = true;
+      });
+
+      gameState.phase = PHASE.ROLE_REVEAL;
+      addWhisper(`⚡ The Conclave has begun with 5 players. Check your secret allegiance.`, true);
+      audio.playGong();
+      broadcastState('Roles assigned');
+
+      // Auto-start Bollywood Suspense Track 2 (Talaash)
+      if (!audio.bgmPlaying) {
+        audio.startBGM(1);
+        document.getElementById('bgmSelector').value = '1';
+      }
+    };
+          card.className = `p-3 rounded-xl border flex items-center justify-between ${
+            p.id === localPlayer.id 
+              ? 'bg-amber-950/30 border-amber-500/60 shadow-lg' 
+              : 'bg-castle-900 border-slate-800'
+          }`;
+          card.innerHTML = `
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-full ${p.isHost ? 'bg-amber-600/30 border border-amber-500' : (p.isBot ? 'bg-red-950/50 border border-rose-800' : 'bg-slate-800')} flex items-center justify-center font-cinzel text-xs font-bold text-amber-300">
+                ${p.isHost ? '👑' : (p.isBot ? '🤖' : (i + 1))}
+              </div>
+              <div>
+                <p class="font-cinzel text-sm font-semibold text-white flex items-center gap-1.5">
+                  ${escapeHtml(p.name)}
+                  ${p.id === localPlayer.id ? '<span class="text-[10px] text-amber-400 font-sans font-normal">(You)</span>' : ''}
+                </p>
+                <p class="text-[10px] text-slate-400">${p.isHost ? 'Castle Host' : (p.isBot ? 'AI Guest' : 'Honored Guest')}</p>
+              </div>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">Ready</span>
+          `;
+        } else {
+          card.className = 'p-3 rounded-xl border border-dashed border-slate-800/80 bg-castle-950/40 flex items-center justify-center text-slate-600 text-xs font-cinzel';
+          card.innerHTML = `<span>+ Seat ${i + 1} (Will be filled by AI Bot)</span>`;
+        }
+        list.appendChild(card);
+      }
+
+      const startBtn = document.getElementById('btnStartGame');
+      const statusHint = document.getElementById('lobbyStatusHint');
+
+      if (isHost()) {
+        startBtn.disabled = false;
+        if (gameState.players.length < 5) {
+          statusHint.innerHTML = `<span class="text-amber-400 font-medium">${gameState.players.length}/5 Human Players. Missing slots will automatically be filled with smart AI Bots on start!</span>`;
+        } else {
+          statusHint.textContent = 'Castle chamber is full (5/5). Ready to begin.';
+        }
+      } else {
+        startBtn.classList.add('hidden');
+        statusHint.textContent = 'Waiting for Host to tap shoulders and distribute roles...';
+      }
+    }
+
+      // Pick exactly 1 Traitor at random
+      const traitorIdx = Math.floor(Math.random() * gameState.players.length);
+      gameState.players.forEach((p, idx) => {
+        p.role = idx === traitorIdx ? 'TRAITOR' : 'FAITHFUL';
+        p.hasConfirmed = false;
+        p.isAlive = true;
+      });
+
+      gameState.phase = PHASE.ROLE_REVEAL;
+      addWhisper(`⚡ The Host has tapped shoulders in silence. Check your identity card.`, true);
+      audio.playGong();
+      broadcastState('Roles assigned');
+    };
+
+    // Confirm Secret Identity
+    document.getElementById('btnConfirmRole').onclick = () => {
+      localPlayer.confirmedRole = true;
+      sendPlayerAction('CONFIRM_ROLE', {});
+      render();
+    };
+
+    // Chat Submission
+    document.getElementById('chatForm').onsubmit = (e) => {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      sendPlayerAction('CHAT_MSG', { sender: localPlayer.name || 'Stranger', text });
+      input.value = '';
+    };
+
+    // Initial render
+    window.onload = () => {
+      render();
+    };
+  </script>
+</body>
+</html>
